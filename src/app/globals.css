@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/*
+ * BRAND COLOURS — change them here and the whole app updates.
+ * Use them in code as e.g. bg-pitch, text-lime, text-workon.
+ */
+@theme {
+  --color-pitch: #0d1411; /* dark green-black background */
+  --color-pitch-raised: #16201b; /* cards and panels on the background */
+  --color-line: #26332c; /* subtle borders */
+  --color-chalk: #eef3ef; /* main text */
+  --color-muted: #9aa8a0; /* secondary text */
+  --color-lime: #c8f04a; /* accent: buttons, highlights, strengths */
+  --color-workon: #f5a94a; /* orange: work-on items only */
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-pitch);
+  color: var(--color-chalk);
+}
