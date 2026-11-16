@@ -14,3 +14,5 @@ One line per decision: what was decided, and why. Newest at the bottom.
 | 2026-11-16 | Consent wording drafted in plain English by Claude; a lawyer checks it before launch. | Australia's Children's Online Privacy Code is coming. |
 | 2026-11-16 | Pages ask search engines not to index the app. | Private app used by children. |
 | 2026-11-16 | Tests use Vitest (`npm test`). | Simple, fast, works with TypeScript. |
+| 2026-11-16 | Supabase settings (Project URL + publishable key) go straight into Vercel's Environment Variables; the owner never pastes keys into chat. The secret/service_role key is not used by the app yet. | Keeps keys out of chat and out of GitHub. The publishable key is safe to be public; row-level security protects the data. |
+| 2026-11-16 | Home page shows a "Setup check" box that tests the Supabase connection on each visit, with a plain-English reason if it fails. | Lets the owner confirm setup without technical tools. |

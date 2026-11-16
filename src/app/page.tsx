@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { brand } from "@/config/brand";
+import { DatabaseStatus } from "@/components/database-status";
 
 const steps = [
   { title: "Upload your match", text: "Film from the sideline and upload from your phone." },
@@ -42,6 +44,15 @@ export default function Home() {
           <span className="rounded-full bg-workon px-3 py-1 text-pitch">Work-on</span>
           <span className="rounded-full border border-line px-3 py-1">Passing</span>
         </div>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+          Setup check
+        </p>
+        <Suspense fallback={<p className="mt-2 text-muted">Checking database…</p>}>
+          <DatabaseStatus />
+        </Suspense>
       </section>
 
       <footer className="mt-auto pt-10 text-center text-xs text-muted">
