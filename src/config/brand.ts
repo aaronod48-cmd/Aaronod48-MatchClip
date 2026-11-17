@@ -6,6 +6,7 @@
  * and it changes everywhere.
  *
  * Colours live in src/app/globals.css (look for "BRAND COLOURS").
+ * Browser-tab icon: src/app/icon.svg. Phone home-screen icon: src/app/apple-icon.png.
  */
 export const brand = {
   name: "MatchClip",
@@ -13,6 +14,8 @@ export const brand = {
   supportEmail: "support@example.com", // placeholder until the domain is decided
   domain: "example.com", // placeholder until the domain is decided
   instagram: "@matchclipapp",
+  /** Logo symbol (no words), transparent background. Swap the file to change the logo. */
+  logo: "/brand/logo-mark.svg",
 } as const;
 
 export type Brand = typeof brand;

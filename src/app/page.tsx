@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Suspense } from "react";
 import { brand } from "@/config/brand";
 import { DatabaseStatus } from "@/components/database-status";
@@ -12,10 +13,12 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-10">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-widest text-lime">
-          {brand.name}
-        </p>
-        <h1 className="mt-3 text-3xl font-bold leading-tight">{brand.tagline}</h1>
+        <div className="flex items-center gap-3">
+          {/* Decorative: the name next to it is what screen readers announce. */}
+          <Image src={brand.logo} alt="" width={44} height={44} priority />
+          <p className="text-2xl font-bold tracking-tight">{brand.name}</p>
+        </div>
+        <h1 className="mt-6 text-3xl font-bold leading-tight">{brand.tagline}</h1>
       </header>
 
       <ol className="mt-8 space-y-3">

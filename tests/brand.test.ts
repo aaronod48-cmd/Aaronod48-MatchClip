@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { brand } from "@/config/brand";
@@ -28,5 +28,9 @@ describe("brand config", () => {
         readFileSync(file, "utf8").toLowerCase().includes(brand.name.toLowerCase()),
       );
     expect(offenders).toEqual([]);
+  });
+
+  it("the logo file the brand settings point to exists", () => {
+    expect(existsSync(join("public", brand.logo))).toBe(true);
   });
 });
