@@ -25,3 +25,11 @@ One line per decision: what was decided, and why. Newest at the bottom.
 | 2026-11-17 | When the last guardian of a player with no login is removed, the player and their consent records are deleted automatically. | Deleting an account must really delete; nothing left with nobody responsible. Lawyer to confirm whether consent records must be kept for a period. |
 | 2026-11-17 | Clubs are prepared for with `organisations` + `organisation_members` (one "Independent coaching" organisation at launch); coach access goes through `coach_assignments`. | Clubs and more coaches can be added later without a rebuild. |
 | 2026-11-17 | Each login has one role for now. | Simple; can become several roles later if someone is e.g. both parent and coach. |
+| 2026-11-17 | Admins manage accounts, roles and coach assignments but do NOT automatically see players' videos; an admin can be assigned as a coach (so the owner needs only one login). | CLAUDE.md: only the player, their parent and assigned coaches view a player's video. |
+| 2026-11-17 | A coach can see an under-18 player only while assigned AND while a parent's consent is active. Withdrawing consent or ending the assignment removes access immediately. | Child safety comes before features. |
+| 2026-11-17 | Not-logged-in visitors have no access to any table. Logged-in users can only edit specific columns (e.g. a parent can change a child's name but not attach a login). | Locked down by default. |
+| 2026-11-17 | Only admins can change roles, enforced by a database trigger. | Nobody can promote themselves. |
+| 2026-11-17 | Children and consents can't be created directly; Step 7 adds a checked function that does both together. | A child can never exist without the consent step. |
+| 2026-11-17 | Teens (13–17) with their own login can see but not edit their own record; their parent edits it. Adults can edit their own. | Parent stays in control of a minor's data. |
+| 2026-11-17 | The staff access log can't be edited or deleted by anyone through the app, including admins. Parents can read the log for their own child. | A trustworthy record; transparency for parents. |
+| 2026-11-17 | Age numbers exist in both `src/config/age-rules.ts` and the database; a test fails if they ever differ. | Change in one place without the two drifting apart (change both, the test reminds you). |

@@ -23,3 +23,18 @@ describe("age rules", () => {
     expect(ageGroupFromBirthYear(year - 19, today)).toBe("adult");
   });
 });
+
+describe("age rules match the database", () => {
+  it("uses the same numbers as the database migration files", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const dir = "supabase/migrations";
+    // Later files override earlier ones, so read them in order and keep the last value.
+    const sql = readdirSync(dir).sort().map((f) => readFileSync(`${dir}/${f}`, "utf8")).join("\n");
+    const lastValue = (fn: string) => {
+      const matches = [...sql.matchAll(new RegExp(`function private\\.${fn}\\(\\)[^$]*\\$\\$\\s*select (\\d+)`, "gi"))];
+      return Number(matches.at(-1)?.[1]);
+    };
+    expect(lastValue("own_login_min_age")).toBe(ageRules.ownLoginMinAge);
+    expect(lastValue("adult_age")).toBe(ageRules.adultAge);
+  });
+});
