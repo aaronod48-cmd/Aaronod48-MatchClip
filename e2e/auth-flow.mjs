@@ -70,7 +70,7 @@ try {
 
   await page.goto(await latestLinkFor(email, { after: t0 }));
   await page.waitForURL(/\/dashboard/);
-  check(await visible(page.getByText("Hi Jo, you're signed in.")), "verification link logs you in and greets you by name");
+  check(await visible(page.getByRole("heading", { name: "Hi Jo" })), "verification link logs you in and greets you by name");
   check(await visible(page.getByText("Parent or guardian")), "account type shows as Parent or guardian");
 
   // 2. Log out, private page is blocked

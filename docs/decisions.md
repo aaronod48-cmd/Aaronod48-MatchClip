@@ -42,3 +42,6 @@ One line per decision: what was decided, and why. Newest at the bottom.
 | 2026-11-24 | Links in emails can only send people to pages inside this site. | Stops a tampered link bouncing someone to another website. |
 | 2026-11-24 | A browser test (`e2e/auth-flow.mjs`) checks the whole sign-in journey against a local Supabase, including the emails. | Proves it works end to end, not just piece by piece. |
 | 2026-11-24 | Supabase's built-in email sender is used for now (only a few emails per hour). Switch to Resend before launch. | Fine for testing; not enough for real users. |
+| 2026-11-24 | One `/dashboard` page shows a different home screen per role (parent: My children; player: My matches; coach: My players; admin: overview + accounts). Each screen just asks the database; the Step 4 rules decide what comes back. | The database, not the screen, is what keeps data private. |
+| 2026-11-24 | The owner's account is made admin with a one-off SQL snippet (`supabase/manual/make-admin.sql`) in the Supabase SQL Editor. | Nobody can promote themselves through the app. |
+| 2026-11-24 | Admin's account list shows names, roles and join dates, not email addresses, for now. | Emails live in Supabase's protected login table; showing them needs a database change, saved for when it's needed. |
