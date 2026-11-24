@@ -65,6 +65,10 @@ insert into public.staff_access_log (staff_id, player_id, action) values
   ('eeeeeeee-0000-0000-0000-000000000001', '11111111-0000-0000-0000-0000000000a1', 'view_video'),
   ('eeeeeeee-0000-0000-0000-000000000002', '11111111-0000-0000-0000-0000000000b1', 'view_video');
 
+-- How many accounts exist in total (counted as the system, for the admin check).
+create table tests.account_count as select count(*)::int as n from auth.users;
+grant select on tests.account_count to authenticated;
+
 -- ===================== Not logged in =====================
 select is(
   (select count(*)::int from information_schema.role_table_grants
@@ -168,7 +172,8 @@ select is((select count(*)::int from public.staff_access_log), 0,
 -- ===================== Admin X =====================
 select tests.login('ffffffff-0000-0000-0000-000000000001');
 
-select is((select count(*)::int from public.profiles), 7, 'Admin sees every account');
+select is((select count(*)::int from public.profiles),
+  (select n from tests.account_count), 'Admin sees every account');
 update public.profiles set role = 'coach' where id = 'cccccccc-0000-0000-0000-000000000001';
 select is((select role::text from public.profiles where id = 'cccccccc-0000-0000-0000-000000000001'),
   'coach', 'Admin can change someone''s role');

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:db": "supabase test db"
+    "test:db": "supabase test db",
+    "test:e2e": "node e2e/auth-flow.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

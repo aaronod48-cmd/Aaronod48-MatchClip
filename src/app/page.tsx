@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
 import { brand } from "@/config/brand";
 import { DatabaseStatus } from "@/components/database-status";
@@ -38,18 +39,16 @@ export default function Home() {
         ))}
       </ol>
 
-      <section className="mt-8 rounded-2xl border border-line bg-pitch-raised p-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted">
-          Colour check
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2 text-sm font-medium">
-          <span className="rounded-full bg-lime px-3 py-1 text-pitch">Strength</span>
-          <span className="rounded-full bg-workon px-3 py-1 text-pitch">Work-on</span>
-          <span className="rounded-full border border-line px-3 py-1">Passing</span>
-        </div>
-      </section>
+      <div className="mt-8 grid gap-3">
+        <Link href="/signup" className="rounded-xl bg-lime px-4 py-3 text-center font-semibold text-pitch">
+          Create an account
+        </Link>
+        <Link href="/login" className="rounded-xl border border-line px-4 py-3 text-center font-semibold">
+          Log in
+        </Link>
+      </div>
 
-      <section className="mt-4 rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
+      <section className="mt-8 rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted">
           Setup check
         </p>
