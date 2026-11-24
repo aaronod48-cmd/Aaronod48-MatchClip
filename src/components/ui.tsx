@@ -13,8 +13,8 @@ export function AuthShell({ title, children }: { title: string; children: React.
         <Image src={brand.logo} alt="" width={36} height={36} priority />
         <span className="text-xl font-bold tracking-tight">{brand.name}</span>
       </Link>
-      <h1 className="mt-8 text-2xl font-bold">{title}</h1>
-      <div className="mt-6">{children}</div>
+      {title && <h1 className="mt-8 text-2xl font-bold">{title}</h1>}
+      <div className={title ? "mt-6" : "mt-8"}>{children}</div>
     </main>
   );
 }

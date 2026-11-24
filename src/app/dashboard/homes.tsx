@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ageGroupFromBirthYear, ageRules } from "@/config/age-rules";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,21 +51,6 @@ function Card({ children }: { children: React.ReactNode }) {
   return <li className="rounded-2xl border border-line bg-pitch-raised p-4">{children}</li>;
 }
 
-function ComingSoonButton({ children, note }: { children: React.ReactNode; note: string }) {
-  return (
-    <div>
-      <button
-        type="button"
-        disabled
-        className="w-full rounded-xl bg-lime px-4 py-3 font-semibold text-pitch opacity-50"
-      >
-        {children}
-      </button>
-      <p className="mt-2 text-center text-xs text-muted">{note}</p>
-    </div>
-  );
-}
-
 // ---------------- Parent ----------------
 
 export async function ParentHome({ supabase }: { supabase: Supabase }) {
@@ -80,14 +66,21 @@ export async function ParentHome({ supabase }: { supabase: Supabase }) {
         <ul className="space-y-3">
           {children.map((c) => (
             <Card key={c.id}>
-              <p className="font-semibold">{c.first_name}</p>
-              <p className="mt-1 text-sm text-muted">
-                {ageLabel(c.birth_year)}
-                {c.team_name ? ` · ${c.team_name}` : ""}
-              </p>
-              <p className={`mt-2 text-sm font-medium ${consented.has(c.id) ? "text-lime" : "text-workon"}`}>
-                {consented.has(c.id) ? "Consent given ✓" : "Consent needed"}
-              </p>
+              <Link href={`/children/${c.id}`} className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{c.first_name}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {ageLabel(c.birth_year)}
+                    {c.team_name ? ` · ${c.team_name}` : ""}
+                  </p>
+                  <p className={`mt-2 text-sm font-medium ${consented.has(c.id) ? "text-lime" : "text-workon"}`}>
+                    {consented.has(c.id) ? "Consent given ✓" : "Consent needed"}
+                  </p>
+                </div>
+                <span aria-hidden className="text-muted">
+                  ›
+                </span>
+              </Link>
             </Card>
           ))}
         </ul>
@@ -95,7 +88,12 @@ export async function ParentHome({ supabase }: { supabase: Supabase }) {
         <Empty>You haven&apos;t added a child yet.</Empty>
       )}
       <div className="mt-4">
-        <ComingSoonButton note="Adding a child (with the consent step) is coming next.">Add a child</ComingSoonButton>
+        <Link
+          href="/children/new"
+          className="block w-full rounded-xl bg-lime px-4 py-3 text-center font-semibold text-pitch"
+        >
+          Add a child
+        </Link>
       </div>
     </Section>
   );
@@ -176,9 +174,7 @@ export async function AdminHome({ supabase, myId }: { supabase: Supabase; myId: 
             </div>
           ))}
         </dl>
-        <p className="mt-3 text-sm text-muted">
-          Players assigned to you as coach: {assigned?.length ?? 0}
-        </p>
+        <p className="mt-3 text-sm text-muted">Players assigned to you as coach: {assigned?.length ?? 0}</p>
       </Section>
 
       <Section title="Accounts">

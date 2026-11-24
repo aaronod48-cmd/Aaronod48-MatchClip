@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { getSupabaseEnv } from "./env";
 
 /**
@@ -10,6 +11,9 @@ export async function createClient() {
   // Read cookies first: this tells Next.js the page depends on who is visiting,
   // so it is never built in advance.
   const cookieStore = await cookies();
+  // Pages using this are about one person, right now: never build them in
+  // advance (they also use today's date, e.g. to work out a child's age group).
+  await connection();
   const env = getSupabaseEnv();
   if (!env) throw new Error("Supabase settings are missing (see .env.example).");
 

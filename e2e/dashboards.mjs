@@ -90,7 +90,7 @@ try {
   check(await visible(p.getByText("Consent given ✓")), "parent: Sam shows 'Consent given'");
   check(await visible(p.getByText("Consent needed")), "parent: Jess shows 'Consent needed'");
   check(await gone(p.getByText(kim.first_name)), "parent: does NOT see another family's child");
-  check(await visible(p.getByRole("button", { name: "Add a child" })), "parent: 'Add a child' button is there");
+  check(await visible(p.getByRole("link", { name: "Add a child" })), "parent: 'Add a child' button is there");
 
   // Player
   p = await logIn(browser, player);

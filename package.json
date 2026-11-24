@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:db": "supabase test db",
     "test:e2e": "node e2e/auth-flow.mjs",
-    "test:e2e:homes": "node e2e/dashboards.mjs"
+    "test:e2e:homes": "node e2e/dashboards.mjs",
+    "test:e2e:child": "node e2e/add-child.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
