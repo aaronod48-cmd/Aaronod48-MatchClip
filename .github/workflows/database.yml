@@ -1,0 +1,59 @@
+# Keeps the real Supabase database up to date with supabase/migrations.
+#
+# 1. "test": builds a throwaway copy of the database and runs every
+#    database check (supabase/tests). If any check fails, it stops here.
+# 2. "update": only then, sends any new changes to the real database.
+#
+# Runs when a database change reaches main, or by hand from the Actions tab.
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_ACCESS_TOKEN  and  SUPABASE_DB_PASSWORD
+
+name: Update database
+
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/migrations/**", "supabase/tests/**", ".github/workflows/database.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: database
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Check database changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.2.0
+      - name: Start a throwaway database
+        run: supabase db start
+      - name: Run all database checks
+        run: supabase test db
+
+  update:
+    name: Update real database
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: mxezimmishiregrgchbz # not secret: it's in the project's web address
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.2.0
+      # --remote=<project> is essential: without it these commands target a
+      # local database, not the real one.
+      - name: Show what will change
+        run: supabase migration list --remote="$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - name: Apply new changes
+        run: supabase db push --remote="$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
