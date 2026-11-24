@@ -33,3 +33,5 @@ One line per decision: what was decided, and why. Newest at the bottom.
 | 2026-11-17 | Teens (13–17) with their own login can see but not edit their own record; their parent edits it. Adults can edit their own. | Parent stays in control of a minor's data. |
 | 2026-11-17 | The staff access log can't be edited or deleted by anyone through the app, including admins. Parents can read the log for their own child. | A trustworthy record; transparency for parents. |
 | 2026-11-17 | Age numbers exist in both `src/config/age-rules.ts` and the database; a test fails if they ever differ. | Change in one place without the two drifting apart (change both, the test reminds you). |
+| 2026-11-24 | Real Supabase is connected to GitHub: migrations in `supabase/migrations/` are applied automatically when they reach `main`. | No copying SQL by hand; the real database always matches the tested files. |
+| 2026-11-24 | Sign-in settings in `supabase/config.toml`: email must be verified before logging in; passwords at least 10 characters with letters and numbers; changing a password needs a recent login. | Safe defaults for an app used by families. |
