@@ -57,3 +57,9 @@ One line per decision: what was decided, and why. Newest at the bottom.
 | 2026-11-25 | An invite can't use the parent's own email or an email that already has an account. | Stops mix-ups and account take-over. |
 | 2026-11-25 | The invite link signs the teen in from the page address, then removes it from the address bar straight away and asks them to choose a password. | Works with Supabase's default invite email; no template changes needed. |
 | 2026-11-25 | Note: Supabase's built-in email sender allows only a few emails per hour (sign-ups, resets AND invites share it). Switch to Resend before real families use it. | Otherwise invites may fail at busy times. |
+| 2026-11-25 | **Week 2 plan approved**: database, upload a match, tap yourself, coach review (clips, hand-placed ring, tags, notes, publish), player sees clips, delete really deletes. No AI, reports or sharing in Week 2. | Owner approval. |
+| 2026-11-25 | Uploads: the parent uploads for under-13s; teens and adult players upload for themselves. The parent always sees everything. | Matches the age rules. |
+| 2026-11-25 | New players are automatically assigned to the owner (the only coach at launch). | One coach for now; manual assignment comes with more coaches. |
+| 2026-11-25 | Full matches allowed, up to 2 hours per video. | Covers 90 minutes plus extra time; easy to tighten later. |
+| 2026-11-25 | The full match video is deleted automatically 60 days after the coach publishes; clips are kept. | Lower cost and better privacy. |
+| 2026-11-25 | Kit colour is free text (not a list). | Owner's choice: more accurate. |
