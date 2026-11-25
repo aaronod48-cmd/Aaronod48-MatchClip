@@ -60,6 +60,6 @@ One line per decision: what was decided, and why. Newest at the bottom.
 | 2026-11-25 | **Week 2 plan approved**: database, upload a match, tap yourself, coach review (clips, hand-placed ring, tags, notes, publish), player sees clips, delete really deletes. No AI, reports or sharing in Week 2. | Owner approval. |
 | 2026-11-25 | Uploads: the parent uploads for under-13s; teens and adult players upload for themselves. The parent always sees everything. | Matches the age rules. |
 | 2026-11-25 | New players are automatically assigned to the owner (the only coach at launch). | One coach for now; manual assignment comes with more coaches. |
-| 2026-11-25 | Full matches allowed, up to 2 hours per video. | Covers 90 minutes plus extra time; easy to tighten later. |
+| 2026-11-25 | Each match is uploaded as two videos, **first half and second half**, each up to 60 minutes. | Owner's choice. Covers 45 minutes plus stoppage time; smaller files upload more reliably from a phone. |
 | 2026-11-25 | The full match video is deleted automatically 60 days after the coach publishes; clips are kept. | Lower cost and better privacy. |
 | 2026-11-25 | Kit colour is free text (not a list). | Owner's choice: more accurate. |
