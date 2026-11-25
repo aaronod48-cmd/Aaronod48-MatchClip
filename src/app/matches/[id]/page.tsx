@@ -1,22 +1,28 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { AuthShell, TextLink } from "@/components/ui";
+import Link from "next/link";
+import { PitchDiagram } from "@/components/pitch-diagram";
+import { AuthShell, Message, TextLink } from "@/components/ui";
 import { formations, type TeamShape } from "@/config/formations";
 import { formatMatchDate, halfLabels, matchStatusLabels } from "@/lib/matches";
 import { createClient } from "@/lib/supabase/server";
+import { frameFor } from "@/lib/video/frames";
 import { syncMatchVideos } from "@/lib/video/sync";
 import { DeleteMatchForm } from "./delete-match-form";
 import { HalfUploader } from "./half-uploader";
+import { SendToCoach } from "./send-to-coach";
 
 export const metadata: Metadata = { title: "Match" };
 
 type Params = Promise<{ id: string }>;
+type Search = Promise<{ tapped?: string; sent?: string }>;
 
 const toneClass = { muted: "text-muted", lime: "text-lime", workon: "text-workon" };
 
-async function Match({ params }: { params: Params }) {
+async function Match({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { id } = await params;
+  const q = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
@@ -25,7 +31,9 @@ async function Match({ params }: { params: Params }) {
   // The database only returns this match if you're allowed to see it.
   const { data: match } = await supabase
     .from("matches")
-    .select("id, player_id, match_date, opponent, team_shape, kit_colour, shirt_number, position, status")
+    .select(
+      "id, player_id, match_date, opponent, team_shape, kit_colour, shirt_number, position, status, tap_half, tap_seconds, tap_x, tap_y",
+    )
     .eq("id", id)
     .maybeSingle();
   if (!match) notFound();
@@ -40,9 +48,20 @@ async function Match({ params }: { params: Params }) {
   const status = matchStatusLabels[match.status] ?? { label: match.status, tone: "muted" as const };
   const canUpload = match.status === "uploading";
   const anyUploaded = (videos ?? []).some((v) => v.status === "processing" || v.status === "ready");
+  const anyReady = (videos ?? []).some((v) => v.status === "ready");
+  const hasTap = match.tap_half !== null && match.tap_x !== null;
+  // The saved tap, shown on its frame (a private, short-lived image).
+  const tapFrame = hasTap
+    ? await frameFor(supabase, match.id, match.tap_half as "first" | "second", Number(match.tap_seconds), 640)
+    : null;
 
   return (
     <div className="space-y-6">
+      {q.tapped && canUpload && <Message kind="success">Tap saved. Now send the match to your coach.</Message>}
+      {q.sent && (
+        <Message kind="success">Sent to the coach. You&apos;ll see your clips here once they&apos;re ready.</Message>
+      )}
+
       <div>
         <p className="text-sm text-muted">{player?.first_name}</p>
         <h1 className="text-2xl font-bold">
@@ -52,24 +71,29 @@ async function Match({ params }: { params: Params }) {
         <p className={`mt-1 text-sm font-medium ${toneClass[status.tone]}`}>{status.label}</p>
       </div>
 
-      <dl className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
-        <div>
-          <dt className="text-muted">Shape</dt>
-          <dd className="font-medium">{match.team_shape}</dd>
+      <div className="flex gap-4 rounded-2xl border border-line bg-pitch-raised p-4">
+        <div className="w-24 shrink-0">
+          <PitchDiagram shape={match.team_shape} position={match.position} shirtNumber={match.shirt_number} />
         </div>
-        <div>
-          <dt className="text-muted">Position</dt>
-          <dd className="font-medium">{position ?? match.position}</dd>
-        </div>
-        <div>
-          <dt className="text-muted">Shirt</dt>
-          <dd className="font-medium">#{match.shirt_number}</dd>
-        </div>
-        <div>
-          <dt className="text-muted">Kit</dt>
-          <dd className="font-medium break-words">{match.kit_colour}</dd>
-        </div>
-      </dl>
+        <dl className="grid flex-1 grid-cols-2 content-start gap-3 text-sm">
+          <div>
+            <dt className="text-muted">Shape</dt>
+            <dd className="font-medium">{match.team_shape}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Position</dt>
+            <dd className="font-medium">{position ?? match.position}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Shirt</dt>
+            <dd className="font-medium">#{match.shirt_number}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Kit</dt>
+            <dd className="font-medium break-words">{match.kit_colour}</dd>
+          </div>
+        </dl>
+      </div>
 
       {(["first", "second"] as const).map((half) => {
         const v = videos?.find((x) => x.half === half);
@@ -96,16 +120,43 @@ async function Match({ params }: { params: Params }) {
         );
       })}
 
-      {canUpload && (
-        <section className="rounded-2xl border border-dashed border-line p-4 text-sm">
-          <h2 className="font-semibold">Next: tap yourself</h2>
+      <section className="rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
+        <h2 className="font-semibold">Tap yourself</h2>
+        {hasTap && tapFrame && "url" in tapFrame && (
+          <div className="relative mt-3 aspect-video w-full overflow-hidden rounded-xl">
+            {/* Private, short-lived image from the video service. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={tapFrame.url} alt="The frame where you tapped yourself" className="h-full w-full object-cover" />
+            <span
+              aria-hidden
+              className="absolute h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-lime shadow-[0_0_0_2px_#0d1411]"
+              style={{ left: `${Number(match.tap_x) * 100}%`, top: `${Number(match.tap_y) * 100}%` }}
+            />
+          </div>
+        )}
+        {hasTap && tapFrame && "error" in tapFrame && <p className="mt-2 text-workon">{tapFrame.error}</p>}
+        {hasTap && <p className="mt-2 text-lime">Tap saved ✓</p>}
+        {canUpload && !hasTap && anyReady && (
+          <Link
+            href={`/matches/${match.id}/tap`}
+            className="mt-3 block w-full rounded-xl bg-lime px-4 py-3 text-center font-semibold text-pitch"
+          >
+            Tap yourself
+          </Link>
+        )}
+        {canUpload && hasTap && (
+          <Link href={`/matches/${match.id}/tap`} className="mt-1 inline-block text-muted underline">
+            Change
+          </Link>
+        )}
+        {canUpload && !anyReady && (
           <p className="mt-1 text-muted">
-            {anyUploaded
-              ? "Coming in the next step: you'll tap yourself on a frame, then send the match to the coach."
-              : "Upload at least one half first."}
+            {anyUploaded ? "Your video is being prepared. Refresh in a minute." : "Upload at least one half first."}
           </p>
-        </section>
-      )}
+        )}
+      </section>
+
+      {canUpload && hasTap && anyUploaded && <SendToCoach matchId={match.id} />}
 
       <DeleteMatchForm matchId={match.id} />
 
@@ -116,11 +167,11 @@ async function Match({ params }: { params: Params }) {
   );
 }
 
-export default function MatchPage(props: { params: Params }) {
+export default function MatchPage(props: { params: Params; searchParams: Search }) {
   return (
     <AuthShell title="">
       <Suspense fallback={<p className="text-muted">Loading…</p>}>
-        <Match params={props.params} />
+        <Match params={props.params} searchParams={props.searchParams} />
       </Suspense>
     </AuthShell>
   );

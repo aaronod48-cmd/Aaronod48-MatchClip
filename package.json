@@ -13,7 +13,8 @@
     "test:e2e:homes": "node e2e/dashboards.mjs",
     "test:e2e:child": "node e2e/add-child.mjs",
     "test:e2e:teen": "node e2e/teen-login.mjs",
-    "test:e2e:upload": "node e2e/upload-match.mjs"
+    "test:e2e:upload": "node e2e/upload-match.mjs",
+    "test:e2e:tap": "node e2e/tap-yourself.mjs"
   },
   "dependencies": {
     "@mux/upchunk": "^3.5.0",

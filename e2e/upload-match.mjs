@@ -92,7 +92,7 @@ try {
   await p.locator("input[type=file]").first().setInputFiles(fakeVideo);
   check(await visible(p.getByText(/Uploaded ✓ · 2 min/), 20000), "first half uploads and shows 'Uploaded ✓ · 2 min'");
   check(await visible(p.getByText("Choose second half video")), "second half can still be uploaded");
-  check(await visible(p.getByText(/you'll tap yourself on a frame/)), "points to the next step: tap yourself");
+  check(await visible(p.getByRole("link", { name: "Tap yourself" })), "points to the next step: tap yourself");
 
   const [video] = await api(`/rest/v1/match_videos?match_id=eq.${matchId}&half=eq.first&select=status,provider_asset_id,provider_playback_id`, undefined, "GET");
   check(video.status === "ready" && video.provider_asset_id && video.provider_playback_id, "the database records the video as ready, with its ids");
