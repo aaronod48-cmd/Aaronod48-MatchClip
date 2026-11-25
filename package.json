@@ -14,9 +14,11 @@
     "test:e2e:child": "node e2e/add-child.mjs",
     "test:e2e:teen": "node e2e/teen-login.mjs",
     "test:e2e:upload": "node e2e/upload-match.mjs",
-    "test:e2e:tap": "node e2e/tap-yourself.mjs"
+    "test:e2e:tap": "node e2e/tap-yourself.mjs",
+    "test:e2e:review": "node e2e/coach-review.mjs"
   },
   "dependencies": {
+    "@mux/mux-player-react": "^3.14.1",
     "@mux/upchunk": "^3.5.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",

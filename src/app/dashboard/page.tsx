@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Home" };
 async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ updated?: string; deleted?: string; matchDeleted?: string }>;
+  searchParams: Promise<{ updated?: string; deleted?: string; matchDeleted?: string; defaultCoach?: string }>;
 }) {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
@@ -24,13 +24,20 @@ async function Home({
   // You can only ever read your own profile (database rule), so this is "me".
   const { data: profile } = await supabase.from("profiles").select("display_name, role").eq("id", myId).maybeSingle();
   const role = profile?.role ?? "parent";
-  const { updated, deleted, matchDeleted } = await searchParams;
+  const { updated, deleted, matchDeleted, defaultCoach } = await searchParams;
 
   return (
     <>
       {deleted && (
         <div className="mt-4">
           <Message kind="info">{deleted} and everything about them has been deleted.</Message>
+        </div>
+      )}
+      {defaultCoach && (
+        <div className="mt-4">
+          <Message kind="success">
+            You&apos;re now the default coach. Players without a coach have been assigned to you.
+          </Message>
         </div>
       )}
       {matchDeleted && (
@@ -57,7 +64,7 @@ async function Home({
 }
 
 export default function DashboardPage(props: {
-  searchParams: Promise<{ updated?: string; deleted?: string; matchDeleted?: string }>;
+  searchParams: Promise<{ updated?: string; deleted?: string; matchDeleted?: string; defaultCoach?: string }>;
 }) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-6">

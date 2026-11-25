@@ -42,7 +42,11 @@ export async function syncMatchVideos(matchId: string): Promise<void> {
         } else {
           await admin
             .from("match_videos")
-            .update({ status: "ready", provider_playback_id: asset.playbackId, duration_seconds: asset.durationSeconds })
+            .update({
+              status: "ready",
+              provider_playback_id: asset.playbackId,
+              duration_seconds: asset.durationSeconds,
+            })
             .eq("id", v.id);
         }
       } else if (asset.state === "failed") {

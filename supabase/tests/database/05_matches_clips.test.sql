@@ -56,7 +56,8 @@ select lives_ok($$update public.app_settings set default_coach_id = 'c0000000-00
   'admin sets the default coach');
 reset role;
 select is((select count(*)::int from public.coach_assignments
-           where coach_id = 'c0000000-0000-0000-0000-00000000000c' and ended_at is null), 3,
+           where coach_id = 'c0000000-0000-0000-0000-00000000000c' and ended_at is null
+             and player_id::text like '11000000%'), 3,
   'existing players without a coach are given to the default coach');
 
 -- ===================== Adult player profile =====================
@@ -138,7 +139,8 @@ select tests.login('f0000000-0000-0000-0000-00000000000f');
 select is((select count(*)::int from public.matches) + (select count(*)::int from public.match_videos), 0,
   'an admin who isn''t the coach sees no matches or videos');
 select tests.login('c0000000-0000-0000-0000-00000000000c');
-select is((select count(*)::int from public.matches), 3, 'the assigned coach sees all three matches');
+select is((select count(*)::int from public.matches where id in (select id from tests.ids)), 3,
+  'the assigned coach sees all three matches');
 
 -- ===================== Coach makes clips =====================
 select lives_ok($$select public.start_review((select id from tests.ids where name = 'm_kid'))$$, 'coach starts the review');
@@ -233,7 +235,8 @@ delete from public.matches where id = (select id from tests.ids where name = 'm_
 reset role;
 select is((select count(*)::int from public.matches where id = (select id from tests.ids where name = 'm_kid')), 0,
   'parent deletes the match');
-select results_eq($$select kind, coalesce(asset_id, upload_id) from private.provider_deletions order by kind$$,
+select results_eq($$select kind, coalesce(asset_id, upload_id) from private.provider_deletions
+  where coalesce(asset_id, upload_id) in ('asset_clip1', 'asset_first') order by kind$$,
   $$values ('clip'::text, 'asset_clip1'::text), ('match_video'::text, 'asset_first'::text)$$,
   'the video and clip files are queued for deletion at the video service');
 

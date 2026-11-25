@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { makeMeDefaultCoachAction } from "@/app/review/actions";
 import { MatchList } from "@/components/match-list";
+import { formatMatchDate } from "@/lib/matches";
 import { ageGroupFromBirthYear, ageRules } from "@/config/age-rules";
 import { createClient } from "@/lib/supabase/server";
 
@@ -135,6 +137,50 @@ export async function PlayerHome({ supabase }: { supabase: Supabase }) {
   );
 }
 
+// ---------------- Matches waiting for the coach (coach and admin) ----------------
+
+async function ReviewQueue({ supabase }: { supabase: Supabase }) {
+  // Only returns matches of players assigned to this coach (with consent for under-18s).
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("id, match_date, opponent, status, submitted_at, players(first_name)")
+    .in("status", ["waiting_for_coach", "in_review"])
+    .order("submitted_at", { ascending: true });
+
+  return (
+    <Section title="Matches to review">
+      {matches?.length ? (
+        <ul className="space-y-2">
+          {matches.map((m) => (
+            <li key={m.id}>
+              <Link
+                href={`/review/${m.id}`}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-pitch-raised p-4"
+              >
+                <span>
+                  <span className="block font-medium">
+                    {(m.players as unknown as { first_name: string } | null)?.first_name} ·{" "}
+                    {formatMatchDate(m.match_date)}
+                    {m.opponent ? ` v ${m.opponent}` : ""}
+                  </span>
+                  <span className={`block text-sm ${m.status === "in_review" ? "text-lime" : "text-muted"}`}>
+                    {m.status === "in_review" ? "In review" : "New"}
+                  </span>
+                </span>
+                <span aria-hidden className="text-muted">
+                  ›
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Empty>Nothing to review right now.</Empty>
+      )}
+    </Section>
+  );
+}
+
 // ---------------- Coach ----------------
 
 export async function CoachHome({ supabase }: { supabase: Supabase }) {
@@ -146,41 +192,64 @@ export async function CoachHome({ supabase }: { supabase: Supabase }) {
     .order("first_name");
 
   return (
-    <Section title="My players">
-      {players?.length ? (
-        <ul className="space-y-3">
-          {players.map((p) => (
-            <Card key={p.id}>
-              <p className="font-semibold">{p.first_name}</p>
-              <p className="mt-1 text-sm text-muted">
-                {ageLabel(p.birth_year)}
-                {p.team_name ? ` · ${p.team_name}` : ""}
-              </p>
-            </Card>
-          ))}
-        </ul>
-      ) : (
-        <Empty>No players are assigned to you yet.</Empty>
-      )}
-    </Section>
+    <>
+      <ReviewQueue supabase={supabase} />
+      <Section title="My players">
+        {players?.length ? (
+          <ul className="space-y-3">
+            {players.map((p) => (
+              <Card key={p.id}>
+                <p className="font-semibold">{p.first_name}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {ageLabel(p.birth_year)}
+                  {p.team_name ? ` · ${p.team_name}` : ""}
+                </p>
+              </Card>
+            ))}
+          </ul>
+        ) : (
+          <Empty>No players are assigned to you yet.</Empty>
+        )}
+      </Section>
+    </>
   );
 }
 
 // ---------------- Admin ----------------
 
 export async function AdminHome({ supabase, myId }: { supabase: Supabase; myId: string }) {
-  const [{ data: accounts }, { count: playerCount }, { data: assigned }] = await Promise.all([
+  const [{ data: accounts }, { count: playerCount }, { data: assigned }, { data: settings }] = await Promise.all([
     supabase.from("profiles").select("id, display_name, role, created_at").order("created_at", { ascending: false }),
     supabase.from("players").select("id", { count: "exact", head: true }),
     // Players assigned to me as coach (an admin can also coach).
     supabase.from("coach_assignments").select("player_id").eq("coach_id", myId).is("ended_at", null),
+    supabase.from("app_settings").select("default_coach_id").maybeSingle(),
   ]);
+  const defaultCoachIsMe = settings?.default_coach_id === myId;
 
   const counts = { parent: 0, player: 0, coach: 0, admin: 0 } as Record<string, number>;
   for (const a of accounts ?? []) counts[a.role] = (counts[a.role] ?? 0) + 1;
 
   return (
     <>
+      <Section title="Default coach">
+        <div className="rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
+          {defaultCoachIsMe ? (
+            <p className="text-lime">You&apos;re the default coach ✓ New players are assigned to you automatically.</p>
+          ) : (
+            <form action={makeMeDefaultCoachAction} className="space-y-3">
+              <p className="text-muted">
+                {settings?.default_coach_id ? "Someone else is the default coach." : "No default coach yet."} The
+                default coach is automatically assigned every player who doesn&apos;t have a coach, now and in future.
+              </p>
+              <button type="submit" className="w-full rounded-xl bg-lime px-4 py-3 font-semibold text-pitch">
+                Make me the default coach
+              </button>
+            </form>
+          )}
+        </div>
+      </Section>
+      <ReviewQueue supabase={supabase} />
       <Section title="Overview">
         <dl className="grid grid-cols-2 gap-3">
           {[

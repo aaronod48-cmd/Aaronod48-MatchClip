@@ -12,10 +12,7 @@ import "server-only";
  *   MUX_TOKEN_ID, MUX_TOKEN_SECRET
  */
 
-export type UploadStatus =
-  | { state: "waiting" }
-  | { state: "asset_created"; assetId: string }
-  | { state: "failed" };
+export type UploadStatus = { state: "waiting" } | { state: "asset_created"; assetId: string } | { state: "failed" };
 
 export type AssetStatus =
   | { state: "processing" }
@@ -30,6 +27,8 @@ export interface VideoProvider {
   getAsset(assetId: string): Promise<AssetStatus>;
   deleteAsset(assetId: string): Promise<void>;
   cancelUpload(uploadId: string): Promise<void>;
+  /** Cut a clip from an existing video as its own (private) video. Returns the new asset's id. */
+  createClipAsset(opts: { sourceAssetId: string; start: number; end: number; passthrough: string }): Promise<string>;
 }
 
 class MuxProvider implements VideoProvider {
@@ -70,7 +69,8 @@ class MuxProvider implements VideoProvider {
 
   async getUpload(uploadId: string): Promise<UploadStatus> {
     const data = await this.call("GET", `/video/v1/uploads/${encodeURIComponent(uploadId)}`);
-    if (data?.status === "asset_created" && data.asset_id) return { state: "asset_created", assetId: String(data.asset_id) };
+    if (data?.status === "asset_created" && data.asset_id)
+      return { state: "asset_created", assetId: String(data.asset_id) };
     if (data?.status === "waiting") return { state: "waiting" };
     return { state: "failed" };
   }
@@ -89,6 +89,26 @@ class MuxProvider implements VideoProvider {
 
   async deleteAsset(assetId: string) {
     await this.call("DELETE", `/video/v1/assets/${encodeURIComponent(assetId)}`);
+  }
+
+  async createClipAsset({
+    sourceAssetId,
+    start,
+    end,
+    passthrough,
+  }: {
+    sourceAssetId: string;
+    start: number;
+    end: number;
+    passthrough: string;
+  }) {
+    const data = await this.call("POST", "/video/v1/assets", {
+      inputs: [{ url: `mux://assets/${sourceAssetId}`, start_time: start, end_time: end }],
+      playback_policies: ["signed"],
+      video_quality: "basic",
+      passthrough,
+    });
+    return String(data!.id);
   }
 
   async cancelUpload(uploadId: string) {
@@ -115,6 +135,9 @@ class FakeProvider implements VideoProvider {
   }
   async deleteAsset() {}
   async cancelUpload() {}
+  async createClipAsset({ passthrough }: { passthrough: string }) {
+    return `fake-asset-clip-${passthrough}`;
+  }
 }
 
 export function isFakeVideoAllowed() {
