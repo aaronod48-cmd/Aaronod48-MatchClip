@@ -54,7 +54,15 @@ export async function startHalfUploadAction(
 
   const provider = getVideoProvider();
   const admin = createAdminClient();
-  if (!provider || !admin) return { error: "Video uploads aren't set up yet. Please contact support." };
+  if (!provider || !admin) {
+    // Names only the missing setting (never a value), so the owner can fix it in Vercel.
+    const missing = [
+      !provider && "MUX_TOKEN_ID / MUX_TOKEN_SECRET",
+      !admin && "SUPABASE_SECRET_KEY",
+    ].filter(Boolean);
+    console.error("Video upload settings missing:", missing.join(", "));
+    return { error: `Video uploads aren't set up yet. Missing setting: ${missing.join(" and ")}.` };
+  }
 
   try {
     const { uploadId, url } = await provider.createUpload({ corsOrigin: await siteOrigin(), passthrough: videoId });
