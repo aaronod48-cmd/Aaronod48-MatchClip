@@ -79,7 +79,12 @@ async function Match({ params }: { params: Params }) {
             <h2 className="font-semibold">{halfLabels[half]}</h2>
             {v?.status === "ready" && (
               <p className="mt-2 text-sm text-lime">
-                Uploaded ✓{v.duration_seconds ? ` · ${Math.round(Number(v.duration_seconds) / 60)} min` : ""}
+                Uploaded ✓
+                {v.duration_seconds
+                  ? Number(v.duration_seconds) < 60
+                    ? " · under 1 min"
+                    : ` · ${Math.round(Number(v.duration_seconds) / 60)} min`
+                  : ""}
               </p>
             )}
             {v?.status === "processing" && (
