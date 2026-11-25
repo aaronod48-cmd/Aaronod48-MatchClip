@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
 /** Pages that need you to be logged in. */
-const PRIVATE_PATHS = ["/dashboard", "/reset-password", "/children"];
+const PRIVATE_PATHS = ["/dashboard", "/reset-password", "/children", "/matches"];
 
 /**
  * Runs before every page: keeps the login fresh, and sends logged-out

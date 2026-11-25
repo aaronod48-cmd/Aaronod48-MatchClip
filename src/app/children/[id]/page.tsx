@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { withdrawConsentAction } from "@/app/children/actions";
+import Link from "next/link";
+import { MatchList } from "@/components/match-list";
 import { AuthShell, Message, TextLink } from "@/components/ui";
 import { ageGroupFromBirthYear, ageRules } from "@/config/age-rules";
 import { createClient } from "@/lib/supabase/server";
@@ -81,6 +83,23 @@ async function Child({ params, searchParams }: { params: Params; searchParams: S
           {child.team_name ? ` · ${child.team_name}` : ""}
         </p>
       </div>
+
+      <section>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Matches</h2>
+          {active && (
+            <Link
+              href={`/matches/new?player=${child.id}`}
+              className="rounded-lg bg-lime px-3 py-1.5 text-sm font-semibold text-pitch"
+            >
+              Add a match
+            </Link>
+          )}
+        </div>
+        <div className="mt-3">
+          <MatchList supabase={supabase} playerId={child.id} />
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-line bg-pitch-raised p-4">
         <h2 className="font-semibold">Consent</h2>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MatchList } from "@/components/match-list";
 import { ageGroupFromBirthYear, ageRules } from "@/config/age-rules";
 import { createClient } from "@/lib/supabase/server";
 
@@ -103,7 +104,7 @@ export async function ParentHome({ supabase }: { supabase: Supabase }) {
 
 export async function PlayerHome({ supabase }: { supabase: Supabase }) {
   // Only ever returns their own record (and, for under-18s, only with consent).
-  const { data: me } = await supabase.from("players").select("first_name, team_name, birth_year").maybeSingle();
+  const { data: me } = await supabase.from("players").select("id, first_name, team_name, birth_year").maybeSingle();
   const isMinor = me ? ageGroupFromBirthYear(me.birth_year) !== "adult" : false;
   return (
     <>
@@ -117,7 +118,15 @@ export async function PlayerHome({ supabase }: { supabase: Supabase }) {
         </Section>
       )}
       <Section title="My matches">
-        <Empty>No matches yet. Uploading a match video is coming soon.</Empty>
+        {me ? <MatchList supabase={supabase} playerId={me.id} /> : <Empty>No matches yet.</Empty>}
+        <div className="mt-4">
+          <Link
+            href="/matches/new"
+            className="block w-full rounded-xl bg-lime px-4 py-3 text-center font-semibold text-pitch"
+          >
+            Upload a match
+          </Link>
+        </div>
       </Section>
       <Section title="My focus this week">
         <Empty>When your coach sends a report, you can pick a work-on to focus on.</Empty>

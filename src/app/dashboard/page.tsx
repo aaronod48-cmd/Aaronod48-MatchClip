@@ -11,7 +11,11 @@ import { AdminHome, CoachHome, ParentHome, PlayerHome, roleLabels } from "./home
 
 export const metadata: Metadata = { title: "Home" };
 
-async function Home({ searchParams }: { searchParams: Promise<{ updated?: string; deleted?: string }> }) {
+async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ updated?: string; deleted?: string; matchDeleted?: string }>;
+}) {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const myId = claims?.claims?.sub;
@@ -20,13 +24,18 @@ async function Home({ searchParams }: { searchParams: Promise<{ updated?: string
   // You can only ever read your own profile (database rule), so this is "me".
   const { data: profile } = await supabase.from("profiles").select("display_name, role").eq("id", myId).maybeSingle();
   const role = profile?.role ?? "parent";
-  const { updated, deleted } = await searchParams;
+  const { updated, deleted, matchDeleted } = await searchParams;
 
   return (
     <>
       {deleted && (
         <div className="mt-4">
           <Message kind="info">{deleted} and everything about them has been deleted.</Message>
+        </div>
+      )}
+      {matchDeleted && (
+        <div className="mt-4">
+          <Message kind="info">The match and its videos have been deleted.</Message>
         </div>
       )}
       {updated === "password" && (
@@ -47,7 +56,9 @@ async function Home({ searchParams }: { searchParams: Promise<{ updated?: string
   );
 }
 
-export default function DashboardPage(props: { searchParams: Promise<{ updated?: string; deleted?: string }> }) {
+export default function DashboardPage(props: {
+  searchParams: Promise<{ updated?: string; deleted?: string; matchDeleted?: string }>;
+}) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-6">
       <header className="flex items-center justify-between">
