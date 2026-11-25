@@ -101,9 +101,21 @@ export async function ParentHome({ supabase }: { supabase: Supabase }) {
 
 // ---------------- Player ----------------
 
-export async function PlayerHome() {
+export async function PlayerHome({ supabase }: { supabase: Supabase }) {
+  // Only ever returns their own record (and, for under-18s, only with consent).
+  const { data: me } = await supabase.from("players").select("first_name, team_name, birth_year").maybeSingle();
+  const isMinor = me ? ageGroupFromBirthYear(me.birth_year) !== "adult" : false;
   return (
     <>
+      {me && (
+        <Section title="Me">
+          <div className="rounded-2xl border border-line bg-pitch-raised p-4">
+            <p className="font-semibold">{me.first_name}</p>
+            {me.team_name && <p className="mt-1 text-sm text-muted">{me.team_name}</p>}
+            {isMinor && <p className="mt-2 text-xs text-muted">Your parent or guardian manages your details.</p>}
+          </div>
+        </Section>
+      )}
       <Section title="My matches">
         <Empty>No matches yet. Uploading a match video is coming soon.</Empty>
       </Section>

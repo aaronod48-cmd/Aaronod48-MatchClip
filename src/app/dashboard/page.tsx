@@ -40,7 +40,7 @@ async function Home({ searchParams }: { searchParams: Promise<{ updated?: string
       </div>
 
       {role === "parent" && <ParentHome supabase={supabase} />}
-      {role === "player" && <PlayerHome />}
+      {role === "player" && <PlayerHome supabase={supabase} />}
       {role === "coach" && <CoachHome supabase={supabase} />}
       {role === "admin" && <AdminHome supabase={supabase} myId={myId} />}
     </>

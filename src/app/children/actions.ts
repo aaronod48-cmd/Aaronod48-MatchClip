@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { consent } from "@/config/consent";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type ChildFormState = { error?: string } | undefined;
@@ -51,7 +52,17 @@ export async function deleteChildAction(_prev: ChildFormState, form: FormData): 
   }
   const supabase = await createClient();
   // The database only lets this child's parent (or an admin) delete them.
-  const { data, error } = await supabase.from("players").delete().eq("id", playerId).select("first_name");
+  const { data, error } = await supabase.from("players").delete().eq("id", playerId).select("first_name, user_id");
   if (error || !data?.length) return { error: "Couldn't delete. Please try again." };
+
+  // If the child had their own login (a teen), delete that login too.
+  // Only reached after the database has confirmed the delete was allowed.
+  if (data[0].user_id) {
+    const admin = createAdminClient();
+    const { error: loginError } = admin
+      ? await admin.auth.admin.deleteUser(data[0].user_id)
+      : { error: new Error("missing server key") };
+    if (loginError) console.error("Child deleted but their login could not be deleted", data[0].user_id);
+  }
   redirect(`/dashboard?deleted=${encodeURIComponent(data[0].first_name)}`);
 }

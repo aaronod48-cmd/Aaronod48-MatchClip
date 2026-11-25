@@ -11,14 +11,16 @@
     "test:db": "supabase test db",
     "test:e2e": "node e2e/auth-flow.mjs",
     "test:e2e:homes": "node e2e/dashboards.mjs",
-    "test:e2e:child": "node e2e/add-child.mjs"
+    "test:e2e:child": "node e2e/add-child.mjs",
+    "test:e2e:teen": "node e2e/teen-login.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",

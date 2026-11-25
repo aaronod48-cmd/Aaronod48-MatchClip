@@ -5,7 +5,8 @@ import { withdrawConsentAction } from "@/app/children/actions";
 import { AuthShell, Message, TextLink } from "@/components/ui";
 import { ageGroupFromBirthYear, ageRules } from "@/config/age-rules";
 import { createClient } from "@/lib/supabase/server";
-import { DeleteChildForm, GiveConsentForm } from "./child-forms";
+import { removeTeenLoginAction } from "@/app/children/teen-actions";
+import { DeleteChildForm, GiveConsentForm, InviteTeenForm } from "./child-forms";
 
 export const metadata: Metadata = { title: "Child" };
 
@@ -42,7 +43,7 @@ async function Child({ params, searchParams }: { params: Params; searchParams: S
   // The database only returns this child if you're allowed to see them.
   const { data: child } = await supabase
     .from("players")
-    .select("id, first_name, birth_year, team_name")
+    .select("id, first_name, birth_year, team_name, user_id")
     .eq("id", id)
     .maybeSingle();
   if (!child) notFound();
@@ -60,12 +61,17 @@ async function Child({ params, searchParams }: { params: Params; searchParams: S
       .is("ended_at", null),
   ]);
   const active = consents?.find((c) => !c.withdrawn_at);
+  const ageGroup = ageGroupFromBirthYear(child.birth_year);
 
   return (
     <div className="space-y-6">
       {q.added && <Message kind="success">{child.first_name} has been added. Thank you for giving consent.</Message>}
       {q.withdrawn && <Message kind="info">Consent withdrawn. Coaches can no longer see {child.first_name}.</Message>}
       {q.consented && <Message kind="success">Consent given again. Thank you.</Message>}
+      {q.invited && (
+        <Message kind="success">Invite sent. {child.first_name} will get an email to choose their password.</Message>
+      )}
+      {q.loginRemoved && <Message kind="info">{child.first_name}&apos;s own login has been removed.</Message>}
       {q.error && <Message kind="error">Something went wrong. Please try again.</Message>}
 
       <div>
@@ -86,10 +92,15 @@ async function Child({ params, searchParams }: { params: Params; searchParams: S
             </p>
             <form action={withdrawConsentAction} className="mt-4">
               <input type="hidden" name="playerId" value={child.id} />
-              <button type="submit" className="w-full rounded-xl border border-workon/60 px-4 py-3 font-semibold text-workon">
+              <button
+                type="submit"
+                className="w-full rounded-xl border border-workon/60 px-4 py-3 font-semibold text-workon"
+              >
                 Withdraw consent
               </button>
-              <p className="mt-2 text-xs text-muted">Coaches lose access straight away. You can give consent again later.</p>
+              <p className="mt-2 text-xs text-muted">
+                Coaches lose access straight away. You can give consent again later.
+              </p>
             </form>
           </>
         ) : (
@@ -98,6 +109,37 @@ async function Child({ params, searchParams }: { params: Params; searchParams: S
             <p className="mt-1 text-sm text-muted">Coaches can&apos;t see {child.first_name} until you give consent.</p>
             <GiveConsentForm playerId={child.id} child={child.first_name} />
           </>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-line bg-pitch-raised p-4 text-sm">
+        <h2 className="font-semibold">Own login</h2>
+        {child.user_id ? (
+          <>
+            <p className="mt-2 font-medium text-lime">{child.first_name} has their own login ✓</p>
+            <p className="mt-1 text-muted">
+              They can see only their own record. You still see and control everything.
+              {!active && " While consent is withdrawn, their login shows nothing."}
+            </p>
+            <form action={removeTeenLoginAction} className="mt-4">
+              <input type="hidden" name="playerId" value={child.id} />
+              <button type="submit" className="w-full rounded-xl border border-line px-4 py-3 font-semibold">
+                Remove their login
+              </button>
+              <p className="mt-2 text-xs text-muted">Their profile stays here, managed by you.</p>
+            </form>
+          </>
+        ) : ageGroup !== "teen" ? (
+          <p className="mt-2 text-muted">
+            Children under {ageRules.ownLoginMinAge} don&apos;t get their own login. You manage everything for{" "}
+            {child.first_name}.
+          </p>
+        ) : !active ? (
+          <p className="mt-2 text-muted">
+            Give consent first, then you can invite {child.first_name} to their own login.
+          </p>
+        ) : (
+          <InviteTeenForm playerId={child.id} child={child.first_name} />
         )}
       </section>
 
