@@ -19,8 +19,8 @@ select is(
 -- 3. Starter data
 select results_eq(
   'select name from public.tags order by sort_order',
-  array['Beaten 1v1','Passing','Duels','First touch','Positioning','Defending','Transition'],
-  'the seven starter tags are there, in order'
+  array['1v1 Attack','1v1 Defence','Passing','Duels','First touch','Shooting','Positioning','Pressing','Defending','Transition'],
+  'the ten tags are there, in order (Beaten 1v1 renamed to 1v1 Defence)'
 );
 select is((select kind::text from public.organisations limit 1), 'independent',
   'one independent organisation exists for the owner');

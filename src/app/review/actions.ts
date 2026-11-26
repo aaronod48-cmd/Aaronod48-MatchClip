@@ -85,7 +85,7 @@ export async function saveClipAction(input: ClipInput): Promise<{ error?: string
     const { error } = await supabase
       .from("clip_tags")
       .insert(
-        input.tagIds.slice(0, 7).map((tag_id) => ({ clip_id: clipId, tag_id, confirmed_by: me, confirmed_at: now })),
+        input.tagIds.slice(0, 10).map((tag_id) => ({ clip_id: clipId, tag_id, confirmed_by: me, confirmed_at: now })),
       );
     if (error) return { error: dbMessage(error), clipId };
   }
