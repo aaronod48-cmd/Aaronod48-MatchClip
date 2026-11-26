@@ -25,9 +25,9 @@ type Props = {
   halves: { half: Half; videoId: string; duration: number }[];
   initialHalf: Half;
   initialPlayback: Playback;
-  tags: { id: string; name: string }[];
+  tags: { id: string; name: string; is_active: boolean }[];
   clips: SavedClip[];
-  readOnly: boolean;
+  matchPublished: boolean;
 };
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, "0")}`;
@@ -40,7 +40,7 @@ const empty = {
   tagIds: [] as string[],
 };
 
-export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback, tags, clips, readOnly }: Props) {
+export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback, tags, clips, matchPublished }: Props) {
   const router = useRouter();
   const [half, setHalf] = useState<Half>(initialHalf);
   const [playback, setPlayback] = useState<Playback>(initialPlayback);
@@ -159,6 +159,7 @@ export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback,
 
   const clipsThisHalf = clips.filter((c) => c.videoId === current.videoId);
   const tagName = (id: string) => tags.find((t) => t.id === id)?.name ?? "";
+  const timesLocked = editingId !== null && clips.find((c) => c.id === editingId)?.status === "published";
 
   return (
     <div className="space-y-6">
@@ -228,21 +229,34 @@ export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback,
         />
       )}
 
-      {!readOnly && (
+      {
         <section className="space-y-4 rounded-2xl border border-line bg-pitch-raised p-4">
           <h2 className="font-semibold">{editingId ? "Edit clip" : "New clip"}</h2>
+          {matchPublished && !editingId && (
+            <p className="text-sm text-muted">
+              New clips stay hidden until you press &quot;Publish new clips&quot; below.
+            </p>
+          )}
+          {timesLocked && (
+            <p className="text-sm text-muted">
+              This clip is published, so its times are fixed. You can change the ring, tags and notes, and the player
+              sees the update straight away.
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={markStart}
-              className="rounded-xl border border-line px-3 py-2 text-sm font-semibold"
+              disabled={timesLocked}
+              className="rounded-xl border border-line px-3 py-2 text-sm font-semibold disabled:opacity-50"
             >
               Mark start {draft.start !== null && <span className="text-lime">· {clock(draft.start)}</span>}
             </button>
             <button
               type="button"
               onClick={markEnd}
-              className="rounded-xl border border-line px-3 py-2 text-sm font-semibold"
+              disabled={timesLocked}
+              className="rounded-xl border border-line px-3 py-2 text-sm font-semibold disabled:opacity-50"
             >
               Mark end {draft.end !== null && <span className="text-lime">· {clock(draft.end)}</span>}
             </button>
@@ -279,22 +293,27 @@ export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback,
           <fieldset>
             <legend className="text-sm font-medium">Tags</legend>
             <div className="mt-2 flex flex-wrap gap-2">
-              {tags.map((t) => {
-                const on = draft.tagIds.includes(t.id);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() =>
-                      setDraft((d) => ({ ...d, tagIds: on ? d.tagIds.filter((x) => x !== t.id) : [...d.tagIds, t.id] }))
-                    }
-                    className={`rounded-full border px-3 py-1 text-sm ${on ? "border-lime bg-lime text-pitch" : "border-line"}`}
-                  >
-                    {t.name}
-                  </button>
-                );
-              })}
+              {tags
+                .filter((t) => t.is_active || draft.tagIds.includes(t.id))
+                .map((t) => {
+                  const on = draft.tagIds.includes(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          tagIds: on ? d.tagIds.filter((x) => x !== t.id) : [...d.tagIds, t.id],
+                        }))
+                      }
+                      className={`rounded-full border px-3 py-1 text-sm ${on ? "border-lime bg-lime text-pitch" : "border-line"}`}
+                    >
+                      {t.name}
+                    </button>
+                  );
+                })}
             </div>
           </fieldset>
 
@@ -345,7 +364,7 @@ export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback,
             )}
           </div>
         </section>
-      )}
+      }
 
       <section>
         <h2 className="font-semibold">
@@ -379,7 +398,7 @@ export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback,
                 <p className="mt-2 text-lime">{c.strengthNote}</p>
                 {c.workonNote && <p className="mt-1 text-workon">{c.workonNote}</p>}
                 {!c.ring && <p className="mt-1 text-xs text-muted">No ring placed.</p>}
-                {!readOnly && (
+                {
                   <div className="mt-3 flex gap-4">
                     <button type="button" onClick={() => edit(c)} className="text-muted underline">
                       Edit
@@ -388,7 +407,7 @@ export function ReviewWorkspace({ matchId, halves, initialHalf, initialPlayback,
                       Delete
                     </button>
                   </div>
-                )}
+                }
               </li>
             ))}
           </ul>

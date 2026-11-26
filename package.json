@@ -15,7 +15,8 @@
     "test:e2e:teen": "node e2e/teen-login.mjs",
     "test:e2e:upload": "node e2e/upload-match.mjs",
     "test:e2e:tap": "node e2e/tap-yourself.mjs",
-    "test:e2e:review": "node e2e/coach-review.mjs"
+    "test:e2e:review": "node e2e/coach-review.mjs",
+    "test:e2e:tags": "node e2e/admin-tags.mjs"
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.14.1",

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureClipAssets } from "@/lib/video/clip-assets";
@@ -108,7 +109,9 @@ export async function publishAction(_prev: PublishState, form: FormData): Promis
   const { error } = await supabase.rpc("publish_match", { p_match: matchId });
   if (error) return { error: dbMessage(error) };
   await ensureClipAssets(matchId);
-  redirect(`/review/${matchId}?published=1`);
+  revalidatePath(`/review/${matchId}`);
+  // A fresh address every time, so the screen always refreshes (even after publishing again).
+  redirect(`/review/${matchId}?published=${Date.now()}`);
 }
 
 /** Switch the review player to another half (a fresh private link; logged for minors). */

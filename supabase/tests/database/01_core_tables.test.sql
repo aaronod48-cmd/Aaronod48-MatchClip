@@ -18,7 +18,8 @@ select is(
 
 -- 3. Starter data
 select results_eq(
-  'select name from public.tags order by sort_order',
+  $$select name from public.tags where name in ('1v1 Attack','1v1 Defence','Passing','Duels','First touch',
+    'Shooting','Positioning','Pressing','Defending','Transition') order by sort_order$$,
   array['1v1 Attack','1v1 Defence','Passing','Duels','First touch','Shooting','Positioning','Pressing','Defending','Transition'],
   'the ten tags are there, in order (Beaten 1v1 renamed to 1v1 Defence)'
 );

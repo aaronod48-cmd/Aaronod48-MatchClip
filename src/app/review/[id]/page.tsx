@@ -52,7 +52,7 @@ async function Review({ params, searchParams }: { params: Params; searchParams: 
       .eq("match_id", id)
       .eq("status", "ready")
       .order("half"),
-    supabase.from("tags").select("id, name").eq("is_active", true).order("sort_order"),
+    supabase.from("tags").select("id, name, is_active").order("sort_order"),
     supabase
       .from("clips")
       .select(
@@ -88,6 +88,7 @@ async function Review({ params, searchParams }: { params: Params; searchParams: 
   }));
   const position = formations[match.team_shape as TeamShape]?.find((p) => p.code === match.position)?.label;
   const published = match.status === "published";
+  const drafts = saved.filter((c) => c.status === "draft").length;
 
   return (
     <div className="space-y-6">
@@ -138,11 +139,16 @@ async function Review({ params, searchParams }: { params: Params; searchParams: 
         initialPlayback={playback}
         tags={tags ?? []}
         clips={saved}
-        readOnly={published}
+        matchPublished={published}
       />
 
-      {!published && (
-        <PublishForm matchId={id} clipCount={saved.length} playerName={player?.first_name ?? "the player"} />
+      {(!published || drafts > 0) && (
+        <PublishForm
+          matchId={id}
+          clipCount={drafts}
+          playerName={player?.first_name ?? "the player"}
+          republish={published}
+        />
       )}
 
       <p className="text-center text-sm">

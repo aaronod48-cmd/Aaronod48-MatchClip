@@ -141,10 +141,23 @@ try {
   await c.getByRole("button", { name: "Publish clips" }).click();
   await c.waitForURL(/published=1/);
   check(await visible(c.getByText(`Published. ${childName} and their parent can now see the clips.`)), "published message");
-  check(await gone(c.getByRole("heading", { name: "New clip" })), "after publishing, the review is read-only");
   check(await visible(c.getByText("Published", { exact: true })), "the clip shows as Published");
 
-  const clips = await api(`/rest/v1/clips?match_id=eq.${match.id}&select=id,status,provider_asset_id,provider_playback_id,ring_seconds,ring_x`, undefined, "GET");
+  // ---- Edit after publishing ----
+  await c.getByRole("button", { name: "Edit" }).first().click();
+  check(await c.getByRole("button", { name: /^Mark start/ }).isDisabled(), "a published clip's times are locked");
+  await c.getByLabel("Strength note").fill("Brilliant first touch under pressure");
+  await c.getByRole("button", { name: "Update clip" }).click();
+  check(await visible(c.getByText("Clip updated.")), "a published clip's note can still be changed");
+  await time.fill("200");
+  await c.getByRole("button", { name: /^Mark start/ }).click();
+  await time.fill("210");
+  await c.getByRole("button", { name: /^Mark end/ }).click();
+  await c.getByLabel("Strength note").fill("Added after publishing");
+  await c.getByRole("button", { name: "Save clip" }).click();
+  check(await visible(c.getByRole("button", { name: "Publish new clips" })), "a clip added later waits for 'Publish new clips'");
+
+  const clips = await api(`/rest/v1/clips?match_id=eq.${match.id}&status=eq.published&select=id,status,provider_asset_id,provider_playback_id,ring_seconds,ring_x`, undefined, "GET");
   check(clips.length === 1 && clips[0].status === "published", "one published clip in the database");
   check(clips[0].provider_asset_id === `fake-asset-clip-${clips[0].id}` && Boolean(clips[0].provider_playback_id),
     "the clip was cut as its own video at the video service");
@@ -153,9 +166,21 @@ try {
   check(tags.length === 2 && tags.every((t) => t.source === "coach" && t.confirmed_by === owner.id), "two coach-confirmed tags");
   const logAfter = (await api(`/rest/v1/staff_access_log?player_id=eq.${kid.id}&select=id,action,staff_id`, undefined, "GET"));
   check(logAfter.length > logBefore && logAfter.every((l) => l.staff_id === owner.id), "the coach's views of the minor's video were logged");
+  const published1 = await api(`/rest/v1/clips?match_id=eq.${match.id}&status=eq.published&select=strength_note`, undefined, "GET");
+  check(published1.length === 1 && published1[0].strength_note === "Brilliant first touch under pressure",
+    "before publishing again: only the first clip is published, with its updated note");
+  await c.check("input[name=confirmPublish]");
+  await c.getByRole("button", { name: "Publish new clips" }).click();
+  await c.getByRole("button", { name: "Publish new clips" }).waitFor({ state: "detached", timeout: 15000 });
+  const published2 = await api(`/rest/v1/clips?match_id=eq.${match.id}&status=eq.published&select=id`, undefined, "GET");
+  check(published2.length === 2, "'Publish new clips' publishes the clip added later");
 
+  const parentApi = async () => {
+    const page = await logIn(browser, parent.email);
+    return page;
+  };
   // ---- Parent sees it's ready ----
-  const p = await logIn(browser, parent.email);
+  const p = await parentApi();
   await p.goto(`${APP}/matches/${match.id}`);
   check(await visible(p.getByText("Clips ready")), "the parent's match page says 'Clips ready'");
 } catch (e) {

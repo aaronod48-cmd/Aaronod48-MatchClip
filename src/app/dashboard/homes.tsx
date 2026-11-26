@@ -250,6 +250,17 @@ export async function AdminHome({ supabase, myId }: { supabase: Supabase; myId: 
         </div>
       </Section>
       <ReviewQueue supabase={supabase} />
+      <Section title="Tags">
+        <Link
+          href="/admin/tags"
+          className="flex items-center justify-between rounded-2xl border border-line bg-pitch-raised p-4"
+        >
+          <span>Manage tags (add, rename, reorder, hide)</span>
+          <span aria-hidden className="text-muted">
+            ›
+          </span>
+        </Link>
+      </Section>
       <Section title="Overview">
         <dl className="grid grid-cols-2 gap-3">
           {[

@@ -122,7 +122,7 @@ select throws_ok(
 select throws_ok(
   $$insert into public.tags (name) values ('Fake tag')$$,
   '42501', null, 'Parent A cannot add tags');
-select is((select count(*)::int from public.tags), 10, 'Parent A can read the tag list');
+select ok((select count(*)::int from public.tags) >= 10, 'Parent A can read the tag list');
 
 -- ===================== Parent B =====================
 select tests.login('bbbbbbbb-0000-0000-0000-000000000001');
