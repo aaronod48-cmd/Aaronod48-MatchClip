@@ -83,6 +83,12 @@ export default function DashboardPage(props: {
       <Suspense fallback={<p className="mt-6 text-muted">Loading…</p>}>
         <Home searchParams={props.searchParams} />
       </Suspense>
+
+      <p className="mt-12 text-center text-xs">
+        <Link href="/account/delete" className="text-muted underline">
+          Delete my account
+        </Link>
+      </p>
     </main>
   );
 }

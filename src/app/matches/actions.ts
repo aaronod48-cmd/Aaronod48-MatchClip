@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { processDeletionsQuietly } from "@/lib/video/deletions";
 import { siteOrigin } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -52,14 +53,12 @@ export async function startHalfUploadAction(
   const { data: videoId, error } = await supabase.rpc("prepare_video_upload", { p_match: matchId, p_half: half });
   if (error || !videoId) return { error: dbMessage(error) };
 
+  await processDeletionsQuietly(); // a retried half's old attempt is deleted at the video service
   const provider = getVideoProvider();
   const admin = createAdminClient();
   if (!provider || !admin) {
     // Names only the missing setting (never a value), so the owner can fix it in Vercel.
-    const missing = [
-      !provider && "MUX_TOKEN_ID / MUX_TOKEN_SECRET",
-      !admin && "SUPABASE_SECRET_KEY",
-    ].filter(Boolean);
+    const missing = [!provider && "MUX_TOKEN_ID / MUX_TOKEN_SECRET", !admin && "SUPABASE_SECRET_KEY"].filter(Boolean);
     console.error("Video upload settings missing:", missing.join(", "));
     return { error: `Video uploads aren't set up yet. Missing setting: ${missing.join(" and ")}.` };
   }
@@ -96,5 +95,6 @@ export async function deleteMatchAction(_prev: FormState, form: FormData): Promi
   // queued for deletion at the video service automatically.
   const { data, error } = await supabase.from("matches").delete().eq("id", matchId).select("id");
   if (error || !data?.length) return { error: "Couldn't delete this match." };
+  await processDeletionsQuietly(); // delete the files at the video service now
   redirect("/dashboard?matchDeleted=1");
 }

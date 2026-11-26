@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { processDeletionsQuietly } from "@/lib/video/deletions";
 import { consent } from "@/config/consent";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -64,5 +65,6 @@ export async function deleteChildAction(_prev: ChildFormState, form: FormData): 
       : { error: new Error("missing server key") };
     if (loginError) console.error("Child deleted but their login could not be deleted", data[0].user_id);
   }
+  await processDeletionsQuietly(); // delete their videos and clips at the video service now
   redirect(`/dashboard?deleted=${encodeURIComponent(data[0].first_name)}`);
 }

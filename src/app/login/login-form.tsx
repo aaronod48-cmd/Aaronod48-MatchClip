@@ -18,6 +18,9 @@ export function LoginForm() {
         </Message>
       )}
       {params.get("signedOut") && !state && <Message kind="info">You&apos;ve logged out.</Message>}
+      {params.get("accountDeleted") && !state && (
+        <Message kind="info">Your account and everything in it has been deleted.</Message>
+      )}
 
       <form action={action} className="space-y-5">
         <Field label="Email" name="email" type="email" autoComplete="email" required defaultValue={state?.email} />

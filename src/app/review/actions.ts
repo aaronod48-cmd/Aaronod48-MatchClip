@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { processDeletionsQuietly } from "@/lib/video/deletions";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureClipAssets } from "@/lib/video/clip-assets";
@@ -96,7 +97,9 @@ export async function saveClipAction(input: ClipInput): Promise<{ error?: string
 export async function deleteClipAction(clipId: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("clips").delete().eq("id", clipId).select("id");
-  return error || !data?.length ? { error: "Couldn't delete this clip." } : {};
+  if (error || !data?.length) return { error: "Couldn't delete this clip." };
+  await processDeletionsQuietly(); // delete the clip's own video at the video service now
+  return {};
 }
 
 export type PublishState = { error?: string } | undefined;

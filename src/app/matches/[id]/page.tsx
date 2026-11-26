@@ -120,7 +120,13 @@ async function Match({ params, searchParams }: { params: Params; searchParams: S
               <p className="mt-2 text-sm text-muted">Uploaded ✓ · being prepared (this can take a few minutes)</p>
             )}
             {!done && canUpload && <HalfUploader matchId={match.id} half={half} failed={v?.status === "errored"} />}
-            {!done && !canUpload && <p className="mt-2 text-sm text-muted">Not uploaded.</p>}
+            {!done && !canUpload && (
+              <p className="mt-2 text-sm text-muted">
+                {!v && match.status === "published"
+                  ? "Full video removed (we delete full matches 60 days after the clips are ready, and keep the clips)."
+                  : "Not uploaded."}
+              </p>
+            )}
           </section>
         );
       })}
