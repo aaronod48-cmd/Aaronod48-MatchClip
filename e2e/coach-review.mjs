@@ -171,9 +171,14 @@ try {
     "before publishing again: only the first clip is published, with its updated note");
   await c.check("input[name=confirmPublish]");
   await c.getByRole("button", { name: "Publish new clips" }).click();
-  await c.getByRole("button", { name: "Publish new clips" }).waitFor({ state: "detached", timeout: 15000 });
-  const published2 = await api(`/rest/v1/clips?match_id=eq.${match.id}&status=eq.published&select=id`, undefined, "GET");
+  // The button changes to "Publishing…" straight away, so wait for the database instead.
+  let published2 = [];
+  for (let i = 0; i < 20 && published2.length < 2; i++) {
+    await c.waitForTimeout(500);
+    published2 = await api(`/rest/v1/clips?match_id=eq.${match.id}&status=eq.published&select=id`, undefined, "GET");
+  }
   check(published2.length === 2, "'Publish new clips' publishes the clip added later");
+  check(await gone(c.getByRole("button", { name: "Publish new clips" })), "and the screen refreshes (no more 'Publish new clips')");
 
   const parentApi = async () => {
     const page = await logIn(browser, parent.email);

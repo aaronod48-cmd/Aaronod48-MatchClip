@@ -60,3 +60,41 @@ export async function playbackForHalf(
     },
   };
 }
+
+export type ClipPlayback =
+  | { kind: "mux"; playbackId: string; tokens: { playback: string; thumbnail: string; storyboard: string } }
+  | { kind: "fake" }
+  | { kind: "preparing" }
+  | { kind: "error"; message: string };
+
+/**
+ * A private, short-lived way to play one clip (its own short video).
+ * The database checks the person may see it (players and parents: published
+ * clips only) and logs it if it's staff viewing a minor's clip.
+ */
+export async function playbackForClip(
+  supabase: Supabase,
+  matchId: string,
+  clip: { id: string; provider_playback_id: string | null; start_seconds: number; end_seconds: number },
+): Promise<ClipPlayback> {
+  const { error } = await supabase.rpc("record_media_view", {
+    p_match: matchId,
+    p_kind: "view_clip",
+    p_target: clip.id,
+  });
+  if (error) return { kind: "error", message: "Not allowed." };
+  if (!clip.provider_playback_id) return { kind: "preparing" };
+  if (isFakeVideoAllowed()) return { kind: "fake" };
+  if (signingKeyMissing()) return { kind: "error", message: "Video playback isn't set up yet." };
+  const ttl = Math.ceil(Number(clip.end_seconds) - Number(clip.start_seconds)) + 2 * 60 * 60;
+  const id = clip.provider_playback_id;
+  return {
+    kind: "mux",
+    playbackId: id,
+    tokens: {
+      playback: signMuxToken(id, "v", ttl),
+      thumbnail: signMuxToken(id, "t", ttl),
+      storyboard: signMuxToken(id, "s", ttl),
+    },
+  };
+}

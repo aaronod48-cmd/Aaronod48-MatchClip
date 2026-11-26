@@ -12,6 +12,7 @@ import { syncMatchVideos } from "@/lib/video/sync";
 import { DeleteMatchForm } from "./delete-match-form";
 import { HalfUploader } from "./half-uploader";
 import { SendToCoach } from "./send-to-coach";
+import { YourClips } from "./your-clips";
 
 export const metadata: Metadata = { title: "Match" };
 
@@ -70,6 +71,10 @@ async function Match({ params, searchParams }: { params: Params; searchParams: S
         </h1>
         <p className={`mt-1 text-sm font-medium ${toneClass[status.tone]}`}>{status.label}</p>
       </div>
+
+      {match.status === "published" && (
+        <YourClips supabase={supabase} matchId={match.id} firstName={player?.first_name ?? "Your"} />
+      )}
 
       <div className="flex gap-4 rounded-2xl border border-line bg-pitch-raised p-4">
         <div className="w-24 shrink-0">
