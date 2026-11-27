@@ -12,6 +12,7 @@ import { syncMatchVideos } from "@/lib/video/sync";
 import { DeleteMatchForm } from "./delete-match-form";
 import { HalfUploader } from "./half-uploader";
 import { SendToCoach } from "./send-to-coach";
+import { MatchReport } from "./match-report";
 import { YourClips } from "./your-clips";
 
 export const metadata: Metadata = { title: "Match" };
@@ -48,6 +49,8 @@ async function Match({ params, searchParams }: { params: Params; searchParams: S
   const position = formations[match.team_shape as TeamShape]?.find((p) => p.code === match.position)?.label;
   const status = matchStatusLabels[match.status] ?? { label: match.status, tone: "muted" as const };
   const canUpload = match.status === "uploading";
+  const { data: viewer } = await supabase.from("profiles").select("role").eq("id", claims.claims.sub).maybeSingle();
+  const canSetFocus = viewer?.role === "parent" || viewer?.role === "player";
   const anyUploaded = (videos ?? []).some((v) => v.status === "processing" || v.status === "ready");
   const anyReady = (videos ?? []).some((v) => v.status === "ready");
   const hasTap = match.tap_half !== null && match.tap_x !== null;
@@ -71,6 +74,10 @@ async function Match({ params, searchParams }: { params: Params; searchParams: S
         </h1>
         <p className={`mt-1 text-sm font-medium ${toneClass[status.tone]}`}>{status.label}</p>
       </div>
+
+      {match.status === "published" && (
+        <MatchReport supabase={supabase} matchId={match.id} playerId={match.player_id} canSetFocus={canSetFocus} />
+      )}
 
       {match.status === "published" && (
         <YourClips supabase={supabase} matchId={match.id} firstName={player?.first_name ?? "Your"} />

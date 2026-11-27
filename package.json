@@ -18,7 +18,8 @@
     "test:e2e:review": "node e2e/coach-review.mjs",
     "test:e2e:tags": "node e2e/admin-tags.mjs",
     "test:e2e:clips": "node e2e/player-clips.mjs",
-    "test:e2e:delete": "node e2e/real-deletion.mjs"
+    "test:e2e:delete": "node e2e/real-deletion.mjs",
+    "test:e2e:report": "node e2e/report-focus.mjs"
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.14.1",

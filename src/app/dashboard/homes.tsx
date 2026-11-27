@@ -2,6 +2,7 @@ import Link from "next/link";
 import { makeMeDefaultCoachAction } from "@/app/review/actions";
 import { MatchList } from "@/components/match-list";
 import { formatMatchDate } from "@/lib/matches";
+import { thisWeekStartSydney } from "@/lib/week";
 import { ageGroupFromBirthYear, ageRules } from "@/config/age-rules";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,6 +55,65 @@ function Card({ children }: { children: React.ReactNode }) {
   return <li className="rounded-2xl border border-line bg-pitch-raised p-4">{children}</li>;
 }
 
+// ---------------- This week's focus ----------------
+
+type FocusRow = {
+  player_id: string;
+  players: { first_name: string } | null;
+  report_items: {
+    body: string;
+    drill_title: string | null;
+    drill_description: string | null;
+    reports: { match_id: string } | null;
+  } | null;
+};
+
+/** The work-on each player chose to focus on this week (the database only returns players you may see). */
+async function FocusList({
+  supabase,
+  showNames,
+  emptyText,
+}: {
+  supabase: Supabase;
+  showNames: boolean;
+  emptyText: string;
+}) {
+  const { data } = await supabase
+    .from("player_focus")
+    .select("player_id, players(first_name), report_items(body, drill_title, drill_description, reports(match_id))")
+    .eq("week_start", thisWeekStartSydney());
+  const rows = (data ?? []) as unknown as FocusRow[];
+  if (!rows.length) return <Empty>{emptyText}</Empty>;
+  return (
+    <ul className="space-y-3">
+      {rows.map((f) => (
+        <li key={f.player_id} className="rounded-2xl border-l-4 border-workon bg-pitch-raised p-4">
+          {showNames && (
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{f.players?.first_name}</p>
+          )}
+          <p className="mt-1 font-medium">{f.report_items?.body}</p>
+          {f.report_items?.drill_title && (
+            <p className="mt-2 text-sm">
+              <span className="font-semibold">Drill:</span> {f.report_items.drill_title}
+              {f.report_items.drill_description && (
+                <span className="block text-muted">{f.report_items.drill_description}</span>
+              )}
+            </p>
+          )}
+          {f.report_items?.reports?.match_id && (
+            <Link
+              href={`/matches/${f.report_items.reports.match_id}`}
+              className="mt-2 inline-block text-sm text-lime underline"
+            >
+              See the report
+            </Link>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // ---------------- Parent ----------------
 
 export async function ParentHome({ supabase }: { supabase: Supabase }) {
@@ -64,41 +124,50 @@ export async function ParentHome({ supabase }: { supabase: Supabase }) {
   const consented = new Set((consents ?? []).filter((c) => !c.withdrawn_at).map((c) => c.player_id));
 
   return (
-    <Section title="My children">
-      {children?.length ? (
-        <ul className="space-y-3">
-          {children.map((c) => (
-            <Card key={c.id}>
-              <Link href={`/children/${c.id}`} className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{c.first_name}</p>
-                  <p className="mt-1 text-sm text-muted">
-                    {ageLabel(c.birth_year)}
-                    {c.team_name ? ` · ${c.team_name}` : ""}
-                  </p>
-                  <p className={`mt-2 text-sm font-medium ${consented.has(c.id) ? "text-lime" : "text-workon"}`}>
-                    {consented.has(c.id) ? "Consent given ✓" : "Consent needed"}
-                  </p>
-                </div>
-                <span aria-hidden className="text-muted">
-                  ›
-                </span>
-              </Link>
-            </Card>
-          ))}
-        </ul>
-      ) : (
-        <Empty>You haven&apos;t added a child yet.</Empty>
-      )}
-      <div className="mt-4">
-        <Link
-          href="/children/new"
-          className="block w-full rounded-xl bg-lime px-4 py-3 text-center font-semibold text-pitch"
-        >
-          Add a child
-        </Link>
-      </div>
-    </Section>
+    <>
+      <Section title="This week's focus">
+        <FocusList
+          supabase={supabase}
+          showNames
+          emptyText="No focus set this week. Open a report and tap 'Set as my focus this week'."
+        />
+      </Section>
+      <Section title="My children">
+        {children?.length ? (
+          <ul className="space-y-3">
+            {children.map((c) => (
+              <Card key={c.id}>
+                <Link href={`/children/${c.id}`} className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{c.first_name}</p>
+                    <p className="mt-1 text-sm text-muted">
+                      {ageLabel(c.birth_year)}
+                      {c.team_name ? ` · ${c.team_name}` : ""}
+                    </p>
+                    <p className={`mt-2 text-sm font-medium ${consented.has(c.id) ? "text-lime" : "text-workon"}`}>
+                      {consented.has(c.id) ? "Consent given ✓" : "Consent needed"}
+                    </p>
+                  </div>
+                  <span aria-hidden className="text-muted">
+                    ›
+                  </span>
+                </Link>
+              </Card>
+            ))}
+          </ul>
+        ) : (
+          <Empty>You haven&apos;t added a child yet.</Empty>
+        )}
+        <div className="mt-4">
+          <Link
+            href="/children/new"
+            className="block w-full rounded-xl bg-lime px-4 py-3 text-center font-semibold text-pitch"
+          >
+            Add a child
+          </Link>
+        </div>
+      </Section>
+    </>
   );
 }
 
@@ -131,7 +200,11 @@ export async function PlayerHome({ supabase }: { supabase: Supabase }) {
         </div>
       </Section>
       <Section title="My focus this week">
-        <Empty>When your coach sends a report, you can pick a work-on to focus on.</Empty>
+        <FocusList
+          supabase={supabase}
+          showNames={false}
+          emptyText="When your coach sends a report, pick a work-on and tap 'Set as my focus this week'."
+        />
       </Section>
     </>
   );
