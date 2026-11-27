@@ -55,6 +55,16 @@ async function Home({
         <p className="mt-1 text-sm text-lime">{roleLabels[role] ?? role}</p>
       </div>
 
+      <Link
+        href="/clips"
+        className="mt-6 flex items-center justify-between rounded-2xl border border-line bg-pitch-raised px-4 py-3 text-sm"
+      >
+        <span>🔍 Search clips by tag</span>
+        <span aria-hidden className="text-muted">
+          ›
+        </span>
+      </Link>
+
       {role === "parent" && <ParentHome supabase={supabase} />}
       {role === "player" && <PlayerHome supabase={supabase} />}
       {role === "coach" && <CoachHome supabase={supabase} />}

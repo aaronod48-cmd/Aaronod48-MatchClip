@@ -20,7 +20,8 @@
     "test:e2e:clips": "node e2e/player-clips.mjs",
     "test:e2e:delete": "node e2e/real-deletion.mjs",
     "test:e2e:report": "node e2e/report-focus.mjs",
-    "test:e2e:share": "node e2e/share-links.mjs"
+    "test:e2e:share": "node e2e/share-links.mjs",
+    "test:e2e:search": "node e2e/search-tags.mjs"
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.14.1",
