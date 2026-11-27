@@ -134,12 +134,35 @@ try {
   await o.goto(`${APP}/review/${match.id}`);
   check(await visible(o.getByText(/could not be found|404/i)), "a coach not assigned to the player gets 'not found'");
 
+  // ---- The report ----
+  await c.check("input[name=confirmPublish]");
+  await c.getByRole("button", { name: "Publish clips and report" }).click();
+  check(await visible(c.getByText("Write the report before publishing.")), "can't publish without a report");
+  check(await visible(c.getByText(/Before publishing, add: all four scores/)), "the report says what's missing");
+  for (const [cat, n] of [["Passing", 7], ["Duels", 6], ["Positioning", 8], ["Decision making", 5]]) {
+    await c.getByRole("radio", { name: `${cat} ${n}`, exact: true }).click();
+  }
+  await c.getByLabel("Strength 1", { exact: true }).fill("Brave on the ball all game");
+  await c.getByRole("button", { name: "+ Add a work-on" }).click();
+  await c.getByLabel("Work-on 1", { exact: true }).fill("Scan before receiving");
+  check(await visible(c.getByText(/a drill for every work-on/)), "a work-on without a drill is flagged");
+  await c.getByLabel("Drill for work-on 1").selectOption("__new");
+  await c.getByLabel("New drill title for work-on 1").fill(`Scan and receive ${stamp % 1000}`);
+  await c.getByLabel("New drill description for work-on 1").fill("Check your shoulder twice before the ball arrives");
+  check(await visible(c.getByText("Report ready to publish ✓")), "the report shows it's ready");
+  await c.getByRole("button", { name: "Save report" }).click();
+  check(await visible(c.getByText("Report saved.")), "report saved");
+  const drillsNow = await api(`/rest/v1/drills?title=eq.${encodeURIComponent(`Scan and receive ${stamp % 1000}`)}&select=id`, undefined, "GET");
+  check(drillsNow.length === 1, "the new drill was added to the library");
+
   // ---- Publish ----
-  await c.getByRole("button", { name: "Publish clips" }).click();
+  await c.getByRole("button", { name: "Publish clips and report" }).click();
   check(c.url().includes("/review/") && !c.url().includes("published"), "can't publish without ticking the box");
   await c.check("input[name=confirmPublish]");
-  await c.getByRole("button", { name: "Publish clips" }).click();
-  await c.waitForURL(/published=1/);
+  await c.getByRole("button", { name: "Publish clips and report" }).click();
+  await c.waitForURL(/published=\d+/);
+  const [rep] = await api(`/rest/v1/reports?match_id=eq.${match.id}&select=status`, undefined, "GET");
+  check(rep?.status === "published", "the report was published with the clips");
   check(await visible(c.getByText(`Published. ${childName} and their parent can now see the clips.`)), "published message");
   check(await visible(c.getByText("Published", { exact: true })), "the clip shows as Published");
 

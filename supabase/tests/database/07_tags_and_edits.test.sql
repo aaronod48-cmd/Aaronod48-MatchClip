@@ -4,6 +4,14 @@ create extension if not exists pgtap with schema extensions;
 select plan(14);
 
 create schema tests;
+create function tests.make_report(p_match uuid) returns void language plpgsql as $f$
+declare r uuid;
+begin
+  insert into public.reports (match_id) values (p_match) returning id into r;
+  insert into public.report_scores (report_id, slot, category_name, score)
+    values (r, 1, 'Passing', 7), (r, 2, 'Duels', 6), (r, 3, 'Positioning', 7), (r, 4, 'Decision making', 6);
+  insert into public.report_items (report_id, kind, body) values (r, 'strength', 'Test strength');
+end $f$;
 create function tests.login(uid uuid) returns void language plpgsql as $$
 begin
   perform set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
@@ -50,6 +58,8 @@ insert into public.matches (id, player_id, match_date, team_shape, kit_colour, s
 insert into public.clips (id, match_id, start_seconds, end_seconds, strength_note)
   values ('7c700000-0000-0000-0000-000000000001', '7a700000-0000-0000-0000-000000000001', 10, 20, 'First');
 
+reset role;
+select tests.make_report('7a700000-0000-0000-0000-000000000001');
 select tests.login('c7000000-0000-0000-0000-00000000000c');
 select is(public.publish_match('7a700000-0000-0000-0000-000000000001'), 1, 'coach publishes the first clip');
 select throws_ok($$update public.clips set start_seconds = 12 where id = '7c700000-0000-0000-0000-000000000001'$$,

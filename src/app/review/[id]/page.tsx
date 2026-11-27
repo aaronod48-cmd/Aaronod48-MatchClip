@@ -10,6 +10,7 @@ import { ensureClipAssets } from "@/lib/video/clip-assets";
 import { frameFor } from "@/lib/video/frames";
 import { playbackForHalf } from "@/lib/video/playback";
 import { PublishForm } from "./publish-form";
+import { ReportEditor, type InitialReport } from "./report-editor";
 import { ReviewWorkspace, type SavedClip } from "./review-workspace";
 
 export const metadata: Metadata = { title: "Review" };
@@ -61,6 +62,43 @@ async function Review({ params, searchParams }: { params: Params; searchParams: 
       .eq("match_id", id)
       .order("start_seconds"),
   ]);
+  const [{ data: report }, { data: categories }, { data: drills }] = await Promise.all([
+    supabase
+      .from("reports")
+      .select(
+        "id, status, report_scores(slot, category_id, score), report_items(id, kind, body, sort_order, drill_id, drill_title)",
+      )
+      .eq("match_id", id)
+      .maybeSingle(),
+    supabase.from("score_categories").select("id, name, is_active").order("sort_order").order("name"),
+    supabase.from("drills").select("id, title, description").eq("is_active", true).order("title"),
+  ]);
+  const items = (
+    (report?.report_items as {
+      id: string;
+      kind: string;
+      body: string;
+      sort_order: number;
+      drill_id: string | null;
+      drill_title: string | null;
+    }[]) ?? []
+  )
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const initialReport: InitialReport = {
+    status: report ? (report.status as "draft" | "published") : "none",
+    scores: ((report?.report_scores as { slot: number; category_id: string | null; score: number }[]) ?? []).map(
+      (r) => ({
+        slot: r.slot,
+        categoryId: r.category_id,
+        score: r.score,
+      }),
+    ),
+    strengths: items.filter((i) => i.kind === "strength").map((i) => ({ id: i.id, body: i.body })),
+    workons: items
+      .filter((i) => i.kind === "workon")
+      .map((i) => ({ id: i.id, body: i.body, drillId: i.drill_id, drillTitle: i.drill_title })),
+  };
   if (!videos?.length) return <Message kind="info">No uploaded video for this match.</Message>;
 
   const tapHalf = (match.tap_half ?? videos[0].half) as "first" | "second";
@@ -142,12 +180,21 @@ async function Review({ params, searchParams }: { params: Params; searchParams: 
         matchPublished={published}
       />
 
-      {(!published || drafts > 0) && (
+      <ReportEditor
+        matchId={id}
+        categories={categories ?? []}
+        drills={drills ?? []}
+        initial={initialReport}
+        playerName={player?.first_name ?? "The player"}
+      />
+
+      {(!published || drafts > 0 || initialReport.status === "draft") && (
         <PublishForm
           matchId={id}
           clipCount={drafts}
           playerName={player?.first_name ?? "the player"}
           republish={published}
+          reportPending={initialReport.status !== "published"}
         />
       )}
 

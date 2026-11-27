@@ -2,9 +2,19 @@
 -- logging staff views, and queueing files for real deletion.
 begin;
 create extension if not exists pgtap with schema extensions;
+-- Start with no default coach (everything here is undone at the end).
+update public.app_settings set default_coach_id = null;
 select plan(59);
 
 create schema tests;
+create function tests.make_report(p_match uuid) returns void language plpgsql as $f$
+declare r uuid;
+begin
+  insert into public.reports (match_id) values (p_match) returning id into r;
+  insert into public.report_scores (report_id, slot, category_name, score)
+    values (r, 1, 'Passing', 7), (r, 2, 'Duels', 6), (r, 3, 'Positioning', 7), (r, 4, 'Decision making', 6);
+  insert into public.report_items (report_id, kind, body) values (r, 'strength', 'Test strength');
+end $f$;
 create function tests.login(uid uuid) returns void language plpgsql as $$
 begin
   perform set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
@@ -176,6 +186,8 @@ select throws_ok($$select public.set_match_tap((select id from tests.ids where n
   '22023', null, 'the tap cannot be changed once the coach is reviewing');
 
 -- ===================== Publish =====================
+reset role;
+select tests.make_report((select id from tests.ids where name = 'm_kid'));
 select tests.login('c0000000-0000-0000-0000-00000000000c');
 select is(public.publish_match((select id from tests.ids where name = 'm_kid')), 1, 'coach publishes: 1 clip goes live');
 select ok((select bool_and(delete_after between now() + interval '59 days' and now() + interval '61 days')

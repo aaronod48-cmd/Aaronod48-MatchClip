@@ -10,6 +10,8 @@
 --   Admin X
 begin;
 create extension if not exists pgtap with schema extensions;
+-- Start with no default coach (everything here is undone at the end).
+update public.app_settings set default_coach_id = null;
 select plan(38);
 
 -- ---------- helper: pretend to be a logged-in person ----------

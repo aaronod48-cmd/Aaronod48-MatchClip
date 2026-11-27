@@ -1,7 +1,7 @@
 -- Week 3 Step 1 checks: score categories, drills, reports, focus and sharing.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(44);
 
 create schema tests;
 create function tests.login(uid uuid) returns void language plpgsql as $$
@@ -60,6 +60,15 @@ select is((select count(*)::int from public.drills), 0, 'parents cannot see the 
 reset role;
 select is((select count(*)::int from public.drills where title = 'Scan and receive'), 1, 'a coach cannot edit another coach''s drill');
 
+-- ===================== A report is required =====================
+reset role;
+insert into public.matches (id, player_id, match_date, team_shape, kit_colour, shirt_number, position, status)
+  values ('9a000000-0000-0000-0000-000000000002', '99000000-0000-0000-0000-000000000001', current_date, '4-4-2', 'Red', 7, 'RM', 'in_review');
+insert into public.clips (match_id, start_seconds, end_seconds, strength_note) values ('9a000000-0000-0000-0000-000000000002', 10, 20, 'x');
+select tests.login('c9000000-0000-0000-0000-00000000000c');
+select throws_ok($$select public.publish_match('9a000000-0000-0000-0000-000000000002')$$, '22023', 'Write the report before publishing.',
+  'a match cannot be published without a report');
+
 -- ===================== Writing a report =====================
 select tests.login('c9000000-0000-0000-0000-00000000000d');
 select throws_ok($$insert into public.reports (match_id) values ('9a000000-0000-0000-0000-000000000001')$$, '42501', null,
@@ -94,7 +103,7 @@ insert into public.report_scores (report_id, slot, category_id, category_name, s
 select throws_ok($$select public.publish_match('9a000000-0000-0000-0000-000000000001')$$, '22023', 'Every work-on needs a drill before publishing.',
   'every work-on needs a drill to publish');
 update public.report_items set drill_id = (select v::uuid from tests.vals where k='drill'), drill_title = 'Scan and receive',
-  drill_description = 'Check shoulder twice before the ball arrives' where kind = 'workon';
+  drill_description = 'Check shoulder twice before the ball arrives' where kind = 'workon' and report_id = (select v::uuid from tests.vals where k = 'report');
 
 select tests.login('a9000000-0000-0000-0000-00000000000a');
 select is((select count(*)::int from public.reports) + (select count(*)::int from public.report_items), 0,
@@ -119,13 +128,15 @@ select results_eq($$select kind, body, drill_title from public.report_items orde
 -- Editing the library later doesn't change the sent report.
 select tests.login('c9000000-0000-0000-0000-00000000000c');
 update public.drills set title = 'Renamed drill' where id = (select v::uuid from tests.vals where k='drill');
-select is((select drill_title from public.report_items where kind = 'workon'), 'Scan and receive',
+select is((select drill_title from public.report_items where kind = 'workon' and report_id = (select v::uuid from tests.vals where k = 'report')), 'Scan and receive',
   'editing a drill in the library does not change a sent report');
 
 -- ===================== Focus =====================
 reset role;
-insert into tests.vals select 'workon', id::text from public.report_items where kind = 'workon';
-insert into tests.vals select 'strength', id::text from public.report_items where kind = 'strength';
+insert into tests.vals select 'workon', id::text from public.report_items
+  where kind = 'workon' and report_id = (select v::uuid from tests.vals where k = 'report');
+insert into tests.vals select 'strength', id::text from public.report_items
+  where kind = 'strength' and report_id = (select v::uuid from tests.vals where k = 'report');
 select tests.login('c9000000-0000-0000-0000-00000000000c');
 select throws_ok($$select public.set_focus((select v::uuid from tests.vals where k='workon'))$$, '42501', null, 'a coach cannot set a player''s focus');
 select tests.login('b9000000-0000-0000-0000-00000000000b');

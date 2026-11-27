@@ -48,11 +48,11 @@ try {
   check(await visible(a.getByRole("textbox", { name: "Name for 1v1 Attack" })), "the tag list is shown");
 
   await a.getByLabel("New tag name").fill(tagName);
-  await a.getByRole("button", { name: "Add tag" }).click();
+  await a.getByRole("button", { name: "Add" }).click();
   check(await visible(a.getByText(`Added "${tagName}".`)), "admin adds a tag");
   await a.getByLabel("New tag name").fill("Shooting");
-  await a.getByRole("button", { name: "Add tag" }).click();
-  check(await visible(a.getByText("A tag with that name already exists.")), "duplicate names are refused");
+  await a.getByRole("button", { name: "Add" }).click();
+  check(await visible(a.getByText("That name already exists.")), "duplicate names are refused");
 
   await a.reload();
   await a.getByRole("textbox", { name: `Name for ${tagName}` }).fill(`${tagName} duels`);
@@ -78,6 +78,18 @@ try {
   check(await visible(a.getByRole("button", { name: `Show ${renamed}` })), "admin hides a tag");
   const [row] = await api(`/rest/v1/tags?name=eq.${encodeURIComponent(renamed)}&select=is_active`, undefined, "GET");
   check(row.is_active === false, "the database marks it hidden");
+
+  // ---- Score categories use the same screen ----
+  await a.goto(`${APP}/dashboard`);
+  await a.getByRole("link", { name: /Score categories/ }).click();
+  await a.waitForURL(/\/admin\/score-categories/);
+  check(await visible(a.getByRole("textbox", { name: "Name for Decision making" })), "the score categories list is shown");
+  const cat = `Work rate ${stamp % 1000}`;
+  await a.getByLabel("New score category name").fill(cat);
+  await a.getByRole("button", { name: "Add" }).click();
+  check(await visible(a.getByText(`Added "${cat}".`)), "admin adds a score category");
+  const [row2] = await api(`/rest/v1/score_categories?name=eq.${encodeURIComponent(cat)}&select=is_active`, undefined, "GET");
+  check(row2?.is_active === true, "the new category is saved");
 
   const p = await logIn(browser, parent.email);
   await p.goto(`${APP}/admin/tags`);
