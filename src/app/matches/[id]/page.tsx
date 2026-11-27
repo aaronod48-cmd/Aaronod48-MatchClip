@@ -13,6 +13,7 @@ import { DeleteMatchForm } from "./delete-match-form";
 import { HalfUploader } from "./half-uploader";
 import { SendToCoach } from "./send-to-coach";
 import { MatchReport } from "./match-report";
+import { SharedLinks } from "./shared-links";
 import { YourClips } from "./your-clips";
 
 export const metadata: Metadata = { title: "Match" };
@@ -51,6 +52,23 @@ async function Match({ params, searchParams }: { params: Params; searchParams: S
   const canUpload = match.status === "uploading";
   const { data: viewer } = await supabase.from("profiles").select("role").eq("id", claims.claims.sub).maybeSingle();
   const canSetFocus = viewer?.role === "parent" || viewer?.role === "player";
+  // Clip numbers as shown on the page (first half, then second; by time) for the "Shared links" list.
+  const { data: publishedClips } = await supabase
+    .from("clips")
+    .select("id, start_seconds, match_videos(half)")
+    .eq("match_id", id)
+    .eq("status", "published");
+  const clipNumbers = new Map(
+    (publishedClips ?? [])
+      .map((c) => ({
+        id: c.id,
+        key:
+          ((c.match_videos as unknown as { half: string } | null)?.half === "second" ? 1e6 : 0) +
+          Number(c.start_seconds),
+      }))
+      .sort((a, b) => a.key - b.key)
+      .map((c, i) => [c.id, i + 1] as const),
+  );
   const anyUploaded = (videos ?? []).some((v) => v.status === "processing" || v.status === "ready");
   const anyReady = (videos ?? []).some((v) => v.status === "ready");
   const hasTap = match.tap_half !== null && match.tap_x !== null;
@@ -80,7 +98,16 @@ async function Match({ params, searchParams }: { params: Params; searchParams: S
       )}
 
       {match.status === "published" && (
-        <YourClips supabase={supabase} matchId={match.id} firstName={player?.first_name ?? "Your"} />
+        <YourClips
+          supabase={supabase}
+          matchId={match.id}
+          firstName={player?.first_name ?? "Your"}
+          canShare={canSetFocus}
+        />
+      )}
+
+      {match.status === "published" && canSetFocus && (
+        <SharedLinks supabase={supabase} matchId={match.id} clipNumbers={clipNumbers} />
       )}
 
       <div className="flex gap-4 rounded-2xl border border-line bg-pitch-raised p-4">

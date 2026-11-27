@@ -16,6 +16,7 @@ All tests run against fake data. Nothing here touches the real Supabase project.
 | `npm run test:e2e:clips` | What a parent sees on a published match: only published clips, only coach-confirmed tags, lime/orange notes, the ring at its moment, 'being prepared' for uncut clips; strangers refused. Pretend video service. |
 | `npm run test:e2e:delete` | A parent deletes their account (children, teen login, matches, video and clip files all gone); a teen is told to ask their parent; the daily job needs its password and removes 60-day-old full videos but keeps clips. Run the app with `CRON_SECRET=test-cron-secret`. |
 | `npm run test:e2e:report` | A parent sees the published report (scores, strengths, work-ons with drills), sets this week's focus (shown on their home screen; a second choice replaces it); draft reports never show; a coach sees the focus but can't set it. |
+| `npm run test:e2e:share` | A parent shares the report and a clip; the links open without an account and show only what was shared; the page tells browsers not to pass its address on; 'Shared links' shows opens; stopped, expired and made-up links don't open; coaches have no share buttons. |
 | `npm run test:e2e:homes` | Logs in as a parent, player, coach and admin and checks each sees the right home screen and nothing they shouldn't. Needs `SUPABASE_LOCAL_SECRET_KEY` (the local demo key from `npx supabase status`). |
 
 ## Local Supabase (needs Docker)
@@ -44,6 +45,7 @@ SUPABASE_LOCAL_SECRET_KEY=<local secret key> NODE_PATH=$(npm root -g) npm run te
 SUPABASE_LOCAL_SECRET_KEY=<local secret key> NODE_PATH=$(npm root -g) npm run test:e2e:clips
 SUPABASE_LOCAL_SECRET_KEY=<local secret key> NODE_PATH=$(npm root -g) npm run test:e2e:delete
 SUPABASE_LOCAL_SECRET_KEY=<local secret key> NODE_PATH=$(npm root -g) npm run test:e2e:report
+SUPABASE_LOCAL_SECRET_KEY=<local secret key> NODE_PATH=$(npm root -g) npm run test:e2e:share
 ```
 
 The homes test refuses to run against anything except a local Supabase.

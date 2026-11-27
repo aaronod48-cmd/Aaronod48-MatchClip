@@ -3,6 +3,7 @@ import { halfLabels } from "@/lib/matches";
 import type { createClient } from "@/lib/supabase/server";
 import { ensureClipAssets } from "@/lib/video/clip-assets";
 import { playbackForClip } from "@/lib/video/playback";
+import { ShareButton } from "./share-button";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -16,10 +17,12 @@ export async function YourClips({
   supabase,
   matchId,
   firstName,
+  canShare = false,
 }: {
   supabase: Supabase;
   matchId: string;
   firstName: string;
+  canShare?: boolean;
 }) {
   await ensureClipAssets(matchId); // pick up any clip videos that have just finished being cut
 
@@ -107,6 +110,7 @@ export async function YourClips({
                   <p className="mt-0.5">{c.workon_note}</p>
                 </div>
               )}
+              {canShare && <ShareButton matchId={matchId} clipId={c.id} label={`Share ${label} with my coach`} />}
             </li>
           );
         })}
